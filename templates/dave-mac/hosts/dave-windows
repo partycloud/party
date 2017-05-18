@@ -1,0 +1,5 @@
+;this file should be obtained from the server side! Here is a standard configuration!
+
+Subnet 0.0.0.0/0 ;if you intend the server to act as default gateway leave the subnet as it is
+
+Address = server.com ;the address of the computer to connect to IP/hostname

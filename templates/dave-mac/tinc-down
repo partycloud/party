@@ -1,0 +1,2 @@
+#!/bin/sh
+ifconfig $INTERFACE down #just bring down the interface. leave it as it is

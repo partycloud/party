@@ -1,0 +1,1 @@
+Subnet = 10.20.40.5/32 ;here goes subnet, however in the most cases the client is an end node and therefore a subnet equal to a host is totally fine. In such case be sure to specify 32bit mask!
