@@ -3,8 +3,11 @@ package main
 import (
 	"fmt"
 
+	"github.com/andlabs/ui"
 	"github.com/getlantern/systray"
 )
+
+var window *ui.Window
 
 var preferred = "8056c2e21c000001"
 
@@ -13,7 +16,11 @@ var knownNetworks = map[string]string{
 }
 var connectedNetworks []GroupNetwork
 
+func connectToGroup() {
+}
+
 func onReady() {
+	fmt.Println("onReady")
 	systray.SetTitle("⛅️")
 	mConnected := systray.AddMenuItem("Group: Disconnected", "")
 	mConnected.Disable()
@@ -52,28 +59,57 @@ func onReady() {
 		connectionUpdated()
 	}
 
+	// toggleGroupMembership := func() {
+	// 	var err error
+	// 	netid := preferred
+	// 	if len(connectedNetworks) == 0 {
+	// 		err = JoinGroup(netid)
+	// 	} else {
+	// 		err = LeaveGroup(netid)
+	// 	}
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+	// 	checkconnection()
+	// }
+
 	go checkconnection()
 
-	for {
-		select {
-		case <-mConnect.ClickedCh:
-			go func() {
-				var err error
-				netid := preferred
-				if len(connectedNetworks) == 0 {
-					err = JoinGroup(netid)
-				} else {
-					err = LeaveGroup(netid)
-				}
-				if err != nil {
-					panic(err)
-				}
-				checkconnection()
-			}()
+	go func() {
+		for {
+			select {
+			case <-mConnect.ClickedCh:
+				connectToGroup()
+			}
 		}
-	}
+
+	}()
 }
 
 func main() {
-	systray.Run(onReady)
+	err := ui.Main(func() {
+		name := ui.NewEntry()
+		button := ui.NewButton("Greet")
+		greeting := ui.NewLabel("")
+		box := ui.NewVerticalBox()
+		box.Append(ui.NewLabel("Enter your name:"), false)
+		box.Append(name, false)
+		box.Append(button, false)
+		box.Append(greeting, false)
+		window = ui.NewWindow("Hello", 200, 100, false)
+		window.SetChild(box)
+		button.OnClicked(func(*ui.Button) {
+			greeting.SetText("Hello, " + name.Text() + "!")
+		})
+		window.OnClosing(func(*ui.Window) bool {
+			ui.Quit()
+			return true
+		})
+		window.Show()
+
+	})
+	if err != nil {
+		panic(err)
+	}
+
 }
