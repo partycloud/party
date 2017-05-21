@@ -1,3 +1,3 @@
-package main
+package party
 
 type API struct{}
