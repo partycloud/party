@@ -148,7 +148,7 @@ func (m *Main) Usage() string {
 	return strings.TrimLeft(`
 cli for partycloud.
 Usage:
-	pc command [arguments]
+    party command [arguments]
 The commands are:
     groups      manage groups
     info        info about the current user
