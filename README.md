@@ -19,4 +19,7 @@ party servers --guild partytown
 # create server
 party servers create --guild partytown --name skyblock --image partycloud/minecraft --data-from ~/servers/skyblock
 
+# start er up
+party servers start --guild partytown --name skyblock
+
 ```
