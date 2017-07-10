@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package partycloud;
+
+service Partycloud {
+  rpc CreateServer(CreateServerRequest) returns (CreateServerResponse) {}
+  rpc ListServers(ListServersRequest) returns (ListServersResponse) {}
+}
+
+message CreateServerRequest {
+  string guild_id = 1;
+  string image = 2;
+  string name = 3;
+}
+
+message CreateServerResponse {
+  string id = 1;
+}
+
+message ListServersRequest {
+  repeated string guild_id = 1;
+}
+
+message ListServersResponse {
+  repeated Server servers = 1;
+}
+
+message Server {
+  string guild_id = 1;
+  string id = 2;
+  string name = 3;
+  string image = 4;
+}

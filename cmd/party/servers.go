@@ -16,6 +16,7 @@ func NewServersCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "servers",
 		Short: "Manage servers",
+		RunE:  ListServers,
 	}
 
 	cmd.AddCommand(NewCreateServerCmd())
@@ -51,6 +52,10 @@ func NewStartServerCmd() *cobra.Command {
 	cmd.Flags().StringVarP(&image, "image", "i", "", "Image name eg: partycloud/minecraft")
 
 	return cmd
+}
+
+func ListServers(cmd *cobra.Command, args []string) error {
+	return party.ListServers(context.TODO())
 }
 
 func CreateServer(cmd *cobra.Command, args []string) error {
