@@ -2,23 +2,21 @@ syntax = "proto3";
 
 package partycloud;
 
-service Partycloud {
-  rpc CreateServer(CreateServerRequest) returns (CreateServerResponse) {}
+// PCDaemon is the api for the local agent on each players machine
+service PCDaemon {
+  rpc Events(stream Event) returns (stream Event) {}
+  // rpc CreateGuild(CreateGuildRequest) returns (CreateGuildResponse) {}
   rpc ListServers(ListServersRequest) returns (ListServersResponse) {}
+  rpc ListGuilds(ListGuildsRequest) returns (ListGuildsResponse) {}
 }
 
-message CreateServerRequest {
-  string guild_id = 1;
-  string image = 2;
-  string name = 3;
-}
-
-message CreateServerResponse {
-  string id = 1;
+message Event {
+  string type = 1;
 }
 
 message ListServersRequest {
-  repeated string guild_id = 1;
+  uint32 page = 1;
+  uint32 limit = 2;
 }
 
 message ListServersResponse {
@@ -26,8 +24,52 @@ message ListServersResponse {
 }
 
 message Server {
-  string guild_id = 1;
   string id = 2;
   string name = 3;
   string image = 4;
+  DataFiles data_files = 5;
 }
+
+message DataFiles {
+  bytes hash = 1;
+}
+
+message ListGuildsRequest {
+  uint32 page = 1;
+  uint32 limit = 2;
+}
+
+message ListGuildsResponse {
+  repeated Guild guilds = 1;
+}
+
+message Guild {
+  string id = 1;
+  string name = 2;
+  bool connected = 3;
+  string ip = 4;
+}
+
+// PCApi is the api for the api.partycloud.com service
+service PCApi {
+  // rpc CreateFileset(CreateFilesetRequest) returns (CreateFilesetResponse) {}
+  // rpc ListServers(ListServersRequest) returns (ListServersResponse) {}
+}
+
+// message CreateServerRequest {
+//   string guild_id = 1;
+//   string image = 2;
+//   string name = 3;
+// }
+//
+// message CreateServerResponse {
+//   string id = 1;
+// }
+
+// message ListServersRequest {
+//   repeated string guild_id = 1;
+// }
+//
+// message ListServersResponse {
+//   repeated Server servers = 1;
+// }

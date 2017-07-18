@@ -37,3 +37,9 @@ g1234~s1234 => {
   Image: "partycloud/minecraft:8",
 }
 ```
+
+## Actors
+
+party – daemon that runs on each players computer
+party-gui – electron app that talks to daemon
+api – api.partycloud.com server

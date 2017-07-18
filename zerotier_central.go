@@ -13,7 +13,7 @@ import (
 const base = "https://my.zerotier.com"
 
 // Network represents a ZeroTier central network
-type Network struct {
+type CentralNetwork struct {
 	ID     string
 	Config NetworkConfig
 }
@@ -23,8 +23,8 @@ type NetworkConfig struct {
 }
 
 // GetViewableNetworks returns a list of ZeroTier central networks
-func GetViewableNetworks(ctx context.Context) ([]Network, error) {
-	var nets []Network
+func GetViewableNetworks(ctx context.Context) ([]CentralNetwork, error) {
+	var nets []CentralNetwork
 	err := callAPI(ctx, "/api/network", &nets)
 	return nets, err
 }
