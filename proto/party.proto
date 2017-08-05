@@ -6,8 +6,11 @@ package partycloud;
 service PCDaemon {
   rpc Events(stream Event) returns (stream Event) {}
   // rpc CreateGuild(CreateGuildRequest) returns (CreateGuildResponse) {}
+
+  rpc CreateServer(CreateServerRequest) returns (CreateServerResponse) {}
   rpc ListServers(ListServersRequest) returns (ListServersResponse) {}
   rpc ListGuilds(ListGuildsRequest) returns (ListGuildsResponse) {}
+
 }
 
 message Event {
@@ -21,6 +24,15 @@ message ListServersRequest {
 
 message ListServersResponse {
   repeated Server servers = 1;
+}
+
+message CreateServerRequest {
+  string image = 1;
+  string name = 2;
+}
+
+message CreateServerResponse {
+  Server server = 1;
 }
 
 message Server {

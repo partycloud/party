@@ -16,8 +16,16 @@ var RootCmd = &cobra.Command{
 	Short: "Hey play some games",
 }
 
+type Config struct {
+	DaemonPort int
+}
+
+var Cfg Config
+
 func init() {
 	cobra.OnInitialize(initConfig)
+	RootCmd.PersistentFlags().StringVar(&discordToken, "discord-token", "", "Bearer token for discord api")
+	RootCmd.PersistentFlags().IntVar(&Cfg.DaemonPort, "daemon-port", 38387, "Port for local daemon")
 }
 
 func initConfig() {

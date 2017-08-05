@@ -3,13 +3,11 @@ package party
 import (
 	"context"
 	"fmt"
-	"io"
-	"os"
+	"path"
 
 	pb "github.com/partycloud/party/proto"
 	"google.golang.org/grpc"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 )
 
@@ -32,6 +30,29 @@ func ApiCall(cb func(pb.PCApiClient) error) error {
 
 	client := pb.NewPCApiClient(conn)
 	return cb(client)
+}
+
+// CreateServer create and starts a new game server
+func CreateServer(ctx context.Context, req *pb.CreateServerRequest, dataPath string) (*pb.CreateServerResponse, error) {
+	if err := PullImage(ctx, req.Image); err != nil {
+		return nil, err
+	}
+
+	hostPath := path.Join(dataPath, req.Name)
+	if err := CreateContainer(ctx, req.Image, req.Name, hostPath); err != nil {
+		return nil, err
+	}
+
+	return &pb.CreateServerResponse{
+		Server: &pb.Server{
+			Id:    req.Name,
+			Image: req.Image,
+			Name:  req.Name,
+			DataFiles: &pb.DataFiles{
+				Hash: []byte("1234"),
+			},
+		},
+	}, nil
 }
 
 // func ListServers(ctx context.Context) error {
@@ -78,24 +99,3 @@ func ApiCall(cb func(pb.PCApiClient) error) error {
 // 	fmt.Println("Starting container", name)
 // 	return cli.ContainerStart(ctx, name, types.ContainerStartOptions{})
 // }
-
-func pullImage(ctx context.Context, image string) error {
-	fmt.Println("Pulling image", image)
-	var err error
-	if cli == nil {
-		cli, err = client.NewEnvClient()
-		if err != nil {
-			return err
-		}
-	}
-
-	// Pull image
-	out, err := cli.ImagePull(ctx, image, types.ImagePullOptions{})
-	if err != nil {
-		return err
-	}
-
-	io.Copy(os.Stdout, out)
-
-	return nil
-}

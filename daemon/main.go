@@ -30,6 +30,7 @@ import (
 )
 
 var cfgPath string
+var dataPath string
 
 func init() { runtime.LockOSThread() }
 
@@ -39,6 +40,8 @@ func main() {
 
 	folders := configDirs.QueryFolders(configdir.Global)
 	cfgPath = folders[0].Path
+	dataPath = folders[0].Path
+	fmt.Println("Data stored at", dataPath)
 	err := os.MkdirAll(cfgPath, os.ModeDir)
 	if err != nil {
 		panic(err)
@@ -115,6 +118,10 @@ func main() {
 
 type DServer struct{}
 
+func (s *DServer) CreateServer(ctx context.Context, req *pb.CreateServerRequest) (*pb.CreateServerResponse, error) {
+	return party.CreateServer(ctx, req, dataPath)
+}
+
 func (s *DServer) ListServers(ctx context.Context, req *pb.ListServersRequest) (*pb.ListServersResponse, error) {
 	return nil, errors.New("Not implemented")
 }
@@ -123,6 +130,7 @@ func (s *DServer) ListGuilds(ctx context.Context, req *pb.ListGuildsRequest) (*p
 	return party.ListGuilds(ctx, req)
 }
 
+// Events sends updates to electron app
 func (s *DServer) Events(stream pb.PCDaemon_EventsServer) error {
 	for {
 		in, err := stream.Recv()
@@ -137,12 +145,15 @@ func (s *DServer) Events(stream pb.PCDaemon_EventsServer) error {
 	}
 }
 
+// RunDaemon starts local daemon process
 func RunDaemon(ctx context.Context) {
-	l, err := net.Listen("tcp", "0.0.0.0:"+strconv.Itoa(viper.GetInt("port")))
+	addr := "0.0.0.0:" + strconv.Itoa(viper.GetInt("port"))
+	l, err := net.Listen("tcp", addr)
 	if err != nil {
 		panic(err)
 	}
 	defer l.Close()
+	fmt.Println("Started grpc:", addr)
 
 	grpcSrv := grpc.NewServer()
 	srv := &DServer{}
@@ -170,34 +181,60 @@ func (h *MemberEventHandler) NotifyUpdate(node *memberlist.Node) {
 }
 
 func RunMemberList(ctx context.Context) {
-	cfg := memberlist.DefaultLANConfig()
-	cfg.LogOutput = ioutil.Discard
-	cfg.BindPort = viper.GetInt("gossip-port")
-	cfg.Events = &MemberEventHandler{}
-	cfg.Name = viper.GetString("name")
+	guildId := ""
 
-	list, err := memberlist.Create(cfg)
-	if err != nil {
-		panic("Failed to create memberlist: " + err.Error())
-	}
-	fmt.Println("gossip listening", cfg.BindPort)
-	peers := viper.GetStringSlice("peers")
-	fmt.Println("finding friends", peers)
+	guildCh := make(chan *pb.Guild)
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(1 * time.Second):
+				guild, err := party.ConnectedGuild(ctx)
+				if err != nil {
+					panic(err)
+				}
 
-	join := func() error {
-		_, err := list.Join(peers)
-		return err
-	}
-	for {
-		err = join()
-		if err == nil {
-			break
+				if guild != nil && guild.Id != guildId {
+					// we changed guild
+					guildId = guild.Id
+					guildCh <- guild
+				}
+			}
 		}
-		time.Sleep(1 * time.Second)
-	}
-	defer list.Shutdown()
-	defer list.Leave(1 * time.Second)
+	}()
 
-	<-ctx.Done()
-	fmt.Println("stopping gossip")
+	for guild := range guildCh {
+		fmt.Println("starting gossip", guild)
+
+		cfg := memberlist.DefaultLANConfig()
+		cfg.LogOutput = ioutil.Discard
+		cfg.BindAddr = guild.Ip
+		cfg.BindPort = viper.GetInt("gossip-port")
+		cfg.Events = &MemberEventHandler{}
+		cfg.Name = viper.GetString("name")
+
+		list, err := memberlist.Create(cfg)
+		if err != nil {
+			panic("Failed to create memberlist: " + err.Error())
+		}
+		fmt.Println("gossip listening", cfg.BindPort)
+		peers := viper.GetStringSlice("peers")
+		fmt.Println("finding friends", peers)
+
+		join := func() error {
+			_, err := list.Join(peers)
+			return err
+		}
+		for {
+			err = join()
+			if err == nil {
+				break
+			}
+			time.Sleep(1 * time.Second)
+		}
+
+		<-ctx.Done()
+		fmt.Println("stopping gossip")
+	}
 }

@@ -12,7 +12,6 @@ import (
 
 	"github.com/gosuri/uitable"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // GuildsCommand represents the "guilds" command execution.
@@ -27,8 +26,6 @@ var listCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(listCmd)
-	listCmd.PersistentFlags().StringVar(&discordToken, "discord-token", "", "Bearer token for discord api")
-	viper.BindPFlag("discord-token", listCmd.PersistentFlags().Lookup("discord-token"))
 }
 
 func List(*cobra.Command, []string) error {

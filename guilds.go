@@ -7,6 +7,18 @@ import (
 	pb "github.com/partycloud/party/proto"
 )
 
+func ConnectedGuild(ctx context.Context) (*pb.Guild, error) {
+	resp, err := ListGuilds(ctx, &pb.ListGuildsRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(resp.Guilds) < 1 {
+		return nil, nil
+	}
+	return resp.Guilds[0], nil
+}
+
 func ListGuilds(ctx context.Context, req *pb.ListGuildsRequest) (*pb.ListGuildsResponse, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()

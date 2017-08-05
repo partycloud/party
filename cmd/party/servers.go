@@ -22,16 +22,18 @@ var serversCmd = &cobra.Command{
 }
 
 func init() {
-	RootCmd.AddCommand(createServerCmd)
-	createServerCmd.Flags().StringVarP(&guild, "guild", "g", "", "Name or ID of guild")
+	RootCmd.AddCommand(serversCmd)
+
+	serversCmd.AddCommand(createServerCmd)
+	// createServerCmd.Flags().StringVarP(&guild, "guild", "g", "", "Name or ID of guild")
 	createServerCmd.Flags().StringVarP(&name, "name", "n", "", "Server name")
 	createServerCmd.Flags().StringVarP(&image, "image", "i", "", "Image name eg: partycloud/minecraft")
 	createServerCmd.Flags().StringVarP(&dataFrom, "data-from", "d", "", "Bootstrap server with data from this directory")
 
-	RootCmd.AddCommand(startServerCmd)
-	startServerCmd.Flags().StringVarP(&guild, "guild", "g", "", "Name or ID of guild")
+	serversCmd.AddCommand(startServerCmd)
 	startServerCmd.Flags().StringVarP(&name, "name", "n", "", "Server name")
 	startServerCmd.Flags().StringVarP(&image, "image", "i", "", "Image name eg: partycloud/minecraft")
+
 }
 
 var createServerCmd = &cobra.Command{
@@ -66,7 +68,18 @@ func ListServers(cmd *cobra.Command, args []string) error {
 }
 
 func CreateServer(cmd *cobra.Command, args []string) error {
-	return errors.New("Not implemented")
+	return DCall(func(client pb.PCDaemonClient) error {
+		req := &pb.CreateServerRequest{
+			Image: image,
+			Name:  name,
+		}
+		resp, err := client.CreateServer(context.Background(), req)
+		if err != nil {
+			return err
+		}
+		fmt.Println(resp)
+		return nil
+	})
 }
 
 // @TODO this command shouldn't take image as an arg
