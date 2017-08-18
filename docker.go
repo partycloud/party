@@ -3,39 +3,35 @@ package party
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 )
 
+// PullImage does what it says on the tin
 func PullImage(ctx context.Context, image string) error {
 	return withClient(func(cli *client.Client) error {
-		fmt.Println("Pulling image", image)
-		out, err := cli.ImagePull(ctx, image, types.ImagePullOptions{})
-		if err != nil {
-			return err
-		}
-
-		io.Copy(os.Stdout, out)
-
-		return nil
+		_, err := cli.ImagePull(ctx, image, types.ImagePullOptions{})
+		return err
 	})
 }
 
-func CreateContainer(ctx context.Context, image, name, hostPath string) error {
+// CreateContainer makes a party container
+func CreateContainer(ctx context.Context, image, name, hostPath, partyID string) error {
 	return withClient(func(cli *client.Client) error {
-		fmt.Println("Creating container", image, name, hostPath)
 		err := os.MkdirAll(hostPath, os.ModePerm)
 		if err != nil {
 			return err
 		}
 		containerCfg := &container.Config{
-			Image: image,
+			Image:  image,
+			Labels: map[string]string{"party": partyID},
 		}
 		hostCfg := &container.HostConfig{
 			Mounts: []mount.Mount{
@@ -46,15 +42,68 @@ func CreateContainer(ctx context.Context, image, name, hostPath string) error {
 				},
 			},
 		}
-		netCfg := &network.NetworkingConfig{}
-		_, err = cli.ContainerCreate(ctx, containerCfg, hostCfg, netCfg, name)
+
+		container, err := findContainer(ctx, cli, partyID)
 		if err != nil {
 			return err
+		}
+		if container == nil {
+			netCfg := &network.NetworkingConfig{}
+			_, err = cli.ContainerCreate(ctx, containerCfg, hostCfg, netCfg, name)
+			if err != nil {
+				fmt.Printf("error ContainerCreate")
+				return err
+			}
 		}
 
 		fmt.Println("Starting container", name)
 		return cli.ContainerStart(ctx, name, types.ContainerStartOptions{})
 	})
+}
+
+// ListContainers lists docker containers that we own
+func ListContainers(ctx context.Context) (containers []types.Container, err error) {
+	err = withClient(func(cli *client.Client) error {
+		filters := filters.NewArgs()
+		filters.Add("label", "party")
+
+		containers, err = cli.ContainerList(ctx, types.ContainerListOptions{
+			Filters: filters,
+		})
+		return err
+	})
+	return
+}
+
+// StopContainer does what it says on the tin
+func StopContainer(ctx context.Context, partyID string) error {
+	return withClient(func(cli *client.Client) error {
+		container, err := findContainer(ctx, cli, partyID)
+		if err != nil {
+			return err
+		}
+		if container != nil {
+			duration := time.Duration(60 * time.Second)
+			return cli.ContainerStop(ctx, container.ID, &duration)
+		}
+		return nil
+	})
+}
+
+func findContainer(ctx context.Context, cli *client.Client, partyID string) (*types.Container, error) {
+	filters := filters.NewArgs()
+	filters.Add("label", "party="+partyID)
+	containers, err := cli.ContainerList(ctx, types.ContainerListOptions{
+		All:     true,
+		Filters: filters,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(containers) > 0 {
+		return &containers[0], nil
+	}
+	return nil, nil
 }
 
 func withClient(cb func(*client.Client) error) error {

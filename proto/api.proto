@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package api;
+
+// Api is the api for the api.partycloud.com service
+service Api {
+  rpc ListServers(ListServersRequest) returns (ListServersResponse) {}
+  rpc GetServer(GetServerRequest) returns (GetServerResponse) {}
+  rpc CreateServer(CreateServerRequest) returns (CreateServerResponse) {}
+  rpc SetFileset(SetFilesetRequest) returns (SetFilesetResponse) {}
+  // rpc CreateFileset(CreateFilesetRequest) returns (CreateFilesetResponse) {}
+  // rpc ListServers(ListServersRequest) returns (ListServersResponse) {}
+}
+
+message ListServersRequest {
+}
+
+message ListServersResponse {
+  repeated Server servers = 1;
+}
+
+message GetServerRequest {
+  string id = 1;
+}
+
+message GetServerResponse {
+  Server server = 1;
+}
+
+message Server {
+  string id = 1;
+  string name = 2;
+  string image = 3;
+  Fileset fileset = 4;
+}
+
+message Fileset {
+  bytes hash = 1;
+}
+
+message CreateServerRequest {
+  string name = 1;
+  string image = 2;
+}
+
+message CreateServerResponse {
+  string id = 1;
+}
+
+message SetFilesetRequest {
+  string server_id = 1;
+  bytes hash = 2;
+}
+
+message SetFilesetResponse {}

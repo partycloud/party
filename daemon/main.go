@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -20,7 +19,7 @@ import (
 
 	"github.com/hashicorp/memberlist"
 	"github.com/partycloud/party"
-	pb "github.com/partycloud/party/proto"
+	pb "github.com/partycloud/party/proto/daemon"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
@@ -30,18 +29,18 @@ import (
 )
 
 var cfgPath string
-var dataPath string
+var cfg party.Config
 
 func init() { runtime.LockOSThread() }
 
 func main() {
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-	configDirs := configdir.New("Partycloud", "Tray")
+	configDirs := configdir.New("Partycloud", "Data")
 
 	folders := configDirs.QueryFolders(configdir.Global)
 	cfgPath = folders[0].Path
-	dataPath = folders[0].Path
-	fmt.Println("Data stored at", dataPath)
+	cfg.DataPath = folders[0].Path
+	fmt.Println("Data stored at", cfg.DataPath)
 	err := os.MkdirAll(cfgPath, os.ModeDir)
 	if err != nil {
 		panic(err)
@@ -51,10 +50,7 @@ func main() {
 	viper.AddConfigPath(cfgPath)
 	viper.AddConfigPath("$HOME/.party")
 	viper.AddConfigPath(".")
-	err = viper.ReadInConfig()
-	if err != nil {
-		panic(fmt.Errorf("fatal error config file: %s", err))
-	}
+	viper.ReadInConfig()
 
 	pflag.Int("gossip-port", 7946, "")
 	viper.BindPFlag("gossip-port", pflag.Lookup("gossip-port"))
@@ -119,11 +115,19 @@ func main() {
 type DServer struct{}
 
 func (s *DServer) CreateServer(ctx context.Context, req *pb.CreateServerRequest) (*pb.CreateServerResponse, error) {
-	return party.CreateServer(ctx, req, dataPath)
+	return cfg.CreateServer(ctx, req)
+}
+
+func (s *DServer) StartServer(ctx context.Context, req *pb.StartServerRequest) (*pb.StartServerResponse, error) {
+	return cfg.StartServer(ctx, req)
+}
+
+func (s *DServer) StopServer(ctx context.Context, req *pb.StopServerRequest) (*pb.StopServerResponse, error) {
+	return cfg.StopServer(ctx, req)
 }
 
 func (s *DServer) ListServers(ctx context.Context, req *pb.ListServersRequest) (*pb.ListServersResponse, error) {
-	return nil, errors.New("Not implemented")
+	return party.ListServers(ctx, req)
 }
 
 func (s *DServer) ListGuilds(ctx context.Context, req *pb.ListGuildsRequest) (*pb.ListGuildsResponse, error) {
@@ -131,7 +135,7 @@ func (s *DServer) ListGuilds(ctx context.Context, req *pb.ListGuildsRequest) (*p
 }
 
 // Events sends updates to electron app
-func (s *DServer) Events(stream pb.PCDaemon_EventsServer) error {
+func (s *DServer) Events(stream pb.Daemon_EventsServer) error {
 	for {
 		in, err := stream.Recv()
 		if err == io.EOF {
@@ -157,7 +161,7 @@ func RunDaemon(ctx context.Context) {
 
 	grpcSrv := grpc.NewServer()
 	srv := &DServer{}
-	pb.RegisterPCDaemonServer(grpcSrv, srv)
+	pb.RegisterDaemonServer(grpcSrv, srv)
 
 	go grpcSrv.Serve(l)
 	<-ctx.Done()

@@ -1,13 +1,15 @@
 syntax = "proto3";
 
-package partycloud;
+package daemon;
 
-// PCDaemon is the api for the local agent on each players machine
-service PCDaemon {
+// Daemon is the api for the local agent on each players machine
+service Daemon {
   rpc Events(stream Event) returns (stream Event) {}
   // rpc CreateGuild(CreateGuildRequest) returns (CreateGuildResponse) {}
 
   rpc CreateServer(CreateServerRequest) returns (CreateServerResponse) {}
+  rpc StartServer(StartServerRequest) returns (StartServerResponse) {}
+  rpc StopServer(StopServerRequest) returns (StopServerResponse) {}
   rpc ListServers(ListServersRequest) returns (ListServersResponse) {}
   rpc ListGuilds(ListGuildsRequest) returns (ListGuildsResponse) {}
 
@@ -35,14 +37,37 @@ message CreateServerResponse {
   Server server = 1;
 }
 
-message Server {
-  string id = 2;
-  string name = 3;
-  string image = 4;
-  DataFiles data_files = 5;
+message StartServerRequest {
+  string id = 1;
 }
 
-message DataFiles {
+message StartServerResponse {
+  Server server = 1;
+}
+
+message StopServerRequest {
+  string id = 1;
+}
+
+message StopServerResponse {
+}
+
+message Server {
+  enum Status {
+    STOPPED = 0;
+    STARTING = 1;
+    RUNNING = 2;
+    STOPPING = 3;
+  }
+
+  string id = 1;
+  string name = 2;
+  string image = 3;
+  Fileset fileset = 4;
+  Status status = 5;
+}
+
+message Fileset {
   bytes hash = 1;
 }
 
@@ -61,27 +86,3 @@ message Guild {
   bool connected = 3;
   string ip = 4;
 }
-
-// PCApi is the api for the api.partycloud.com service
-service PCApi {
-  // rpc CreateFileset(CreateFilesetRequest) returns (CreateFilesetResponse) {}
-  // rpc ListServers(ListServersRequest) returns (ListServersResponse) {}
-}
-
-// message CreateServerRequest {
-//   string guild_id = 1;
-//   string image = 2;
-//   string name = 3;
-// }
-//
-// message CreateServerResponse {
-//   string id = 1;
-// }
-
-// message ListServersRequest {
-//   repeated string guild_id = 1;
-// }
-//
-// message ListServersResponse {
-//   repeated Server servers = 1;
-// }

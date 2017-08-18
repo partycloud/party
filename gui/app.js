@@ -4,7 +4,7 @@ const net = require('net')
 const PROTO_PATH = __dirname + '/../proto/party.proto'
 const pb = grpc.load(PROTO_PATH).partycloud
 
-// const sock = '/Users/dave/Library/Application Support/Partycloud/Tray/party.sock'
+// const sock = '/Users/dave/Library/Application Support/Partycloud/Data/party.sock'
 
 const client = new pb.PCDaemon('localhost:50051', grpc.credentials.createInsecure());
 

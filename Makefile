@@ -1,5 +1,10 @@
-proto/party.pb.go: proto/party.proto
-	protoc -I proto/ proto/party.proto --go_out=plugins=grpc:proto
+proto/party/api.pb.go: proto/api.proto
+	mkdir -p proto/api
+	protoc -I proto/ proto/api.proto --go_out=plugins=grpc:proto/api
+
+proto/party/daemon.pb.go: proto/daemon.proto
+	mkdir -p proto/daemon
+	protoc -I proto/ proto/daemon.proto --go_out=plugins=grpc:proto/daemon
 
 build/Partycloud.app:
 	mkdir -p build/Partycloud.app/Contents/MacOS

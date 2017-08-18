@@ -4,7 +4,7 @@ import (
 	"context"
 	"net"
 
-	pb "github.com/partycloud/party/proto"
+	pb "github.com/partycloud/party/proto/daemon"
 )
 
 func ConnectedGuild(ctx context.Context) (*pb.Guild, error) {

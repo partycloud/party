@@ -5,17 +5,18 @@ import (
 	"os"
 	"strconv"
 
-	pb "github.com/partycloud/party/proto"
+	pb "github.com/partycloud/party/proto/daemon"
 	"google.golang.org/grpc"
 )
 
-func DCall(fn func(client pb.PCDaemonClient) error) error {
+// DCall wraps calls to the daemon
+func DCall(fn func(client pb.DaemonClient) error) error {
 	conn, err := grpc.Dial("127.0.0.1:"+strconv.Itoa(Cfg.DaemonPort), grpc.WithInsecure())
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
-	client := pb.NewPCDaemonClient(conn)
+	client := pb.NewDaemonClient(conn)
 
 	return fn(client)
 }

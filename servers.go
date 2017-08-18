@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"strings"
 
-	pb "github.com/partycloud/party/proto"
-	"google.golang.org/grpc"
+	papi "github.com/partycloud/party/proto/api"
+	pb "github.com/partycloud/party/proto/daemon"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 )
 
@@ -20,26 +22,22 @@ Advertise
 
 var cli *client.Client
 
-func ApiCall(cb func(pb.PCApiClient) error) error {
-	conn, err := grpc.Dial("localhost:10000", grpc.WithInsecure())
-	if err != nil {
-		fmt.Println("hi")
-		return err
-	}
-	defer conn.Close()
-
-	client := pb.NewPCApiClient(conn)
-	return cb(client)
-}
-
 // CreateServer create and starts a new game server
-func CreateServer(ctx context.Context, req *pb.CreateServerRequest, dataPath string) (*pb.CreateServerResponse, error) {
-	if err := PullImage(ctx, req.Image); err != nil {
+func (c *Config) CreateServer(ctx context.Context, req *pb.CreateServerRequest) (*pb.CreateServerResponse, error) {
+	var resp *papi.CreateServerResponse
+	var err error
+	err = APICall(func(client papi.ApiClient) error {
+		resp, err = client.CreateServer(ctx, &papi.CreateServerRequest{
+			Image: req.Image,
+			Name:  req.Name,
+		})
+		return err
+	})
+	if err != nil {
 		return nil, err
 	}
 
-	hostPath := path.Join(dataPath, req.Name)
-	if err := CreateContainer(ctx, req.Image, req.Name, hostPath); err != nil {
+	if err = c.startServer(ctx, req.Image, req.Name, resp.Id); err != nil {
 		return nil, err
 	}
 
@@ -48,54 +46,122 @@ func CreateServer(ctx context.Context, req *pb.CreateServerRequest, dataPath str
 			Id:    req.Name,
 			Image: req.Image,
 			Name:  req.Name,
-			DataFiles: &pb.DataFiles{
+			Fileset: &pb.Fileset{
 				Hash: []byte("1234"),
 			},
 		},
 	}, nil
 }
 
-// func ListServers(ctx context.Context) error {
-// 	return ApiCall(func(client pb.PCApiClient) error {
-// 		resp, err := client.ListServers(ctx, &pb.ListServersRequest{GuildId: []string{"partytown"}})
-// 		if err != nil {
-// 			return err
-// 		}
-//
-// 		fmt.Println(resp)
-// 		return nil
-// 	})
-// }
+// StartServer create and starts a new game server
+func (c *Config) StartServer(ctx context.Context, req *pb.StartServerRequest) (*pb.StartServerResponse, error) {
+	var resp *papi.GetServerResponse
+	var err error
+	err = APICall(func(client papi.ApiClient) error {
+		fmt.Println("StartServer", req.Id)
+		resp, err = client.GetServer(ctx, &papi.GetServerRequest{
+			Id: req.Id,
+		})
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	srv := resp.Server
 
-// func CreateServer(ctx context.Context, image, name, dataFrom string) error {
-// 	return ApiCall(func(client pb.PartycloudClient) error {
-// 		resp, err := client.CreateServer(ctx, &pb.CreateServerRequest{
-// 			GuildId: "partytown",
-// 			Image:   image,
-// 			Name:    name,
-// 		})
-// 		if err != nil {
-// 			return err
-// 		}
-//
-// 		fmt.Println(resp)
-// 		return nil
-// 	})
-// }
+	if err = c.startServer(ctx, srv.Image, srv.Name, resp.Server.Id); err != nil {
+		return nil, err
+	}
 
-// func StartServer(ctx context.Context, image, name string) error {
-// 	fmt.Println("TODO: ensure synced")
-//
-// 	pullImage(ctx, image)
-//
-// 	fmt.Println("Creating container", image, name)
-// 	_, err := cli.ContainerCreate(ctx, &container.Config{
-// 		Image: image,
-// 	}, nil, nil, name)
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	fmt.Println("Starting container", name)
-// 	return cli.ContainerStart(ctx, name, types.ContainerStartOptions{})
-// }
+	return &pb.StartServerResponse{
+		Server: &pb.Server{
+			Id:    srv.Id,
+			Image: srv.Image,
+			Name:  srv.Name,
+			Fileset: &pb.Fileset{
+				Hash: []byte("1234"),
+			},
+		},
+	}, nil
+}
+
+// StopServer stops a game server
+func (c *Config) StopServer(ctx context.Context, req *pb.StopServerRequest) (*pb.StopServerResponse, error) {
+	var resp *papi.GetServerResponse
+	var err error
+	err = APICall(func(client papi.ApiClient) error {
+		resp, err = client.GetServer(ctx, &papi.GetServerRequest{
+			Id: req.Id,
+		})
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err = StopContainer(ctx, req.Id); err != nil {
+		return nil, err
+	}
+
+	return &pb.StopServerResponse{}, nil
+}
+
+// ListServers calls the api and returns a list of persistent servers
+func ListServers(ctx context.Context, req *pb.ListServersRequest) (*pb.ListServersResponse, error) {
+	var resp *papi.ListServersResponse
+	err := APICall(func(client papi.ApiClient) error {
+		var err error
+		resp, err = client.ListServers(ctx, &papi.ListServersRequest{})
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	containers, err := ListContainers(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	servers := make([]*pb.Server, len(resp.Servers))
+	for i, s := range resp.Servers {
+		var container *types.Container
+		for _, c := range containers {
+			if c.Labels["party"] == s.Id {
+				container = &c
+			}
+		}
+
+		status := pb.Server_STOPPED
+		if container != nil {
+			if strings.HasPrefix(container.Status, "Up") {
+				status = pb.Server_RUNNING
+			}
+		}
+
+		var fileset pb.Fileset
+		if s.Fileset != nil {
+			fileset.Hash = s.Fileset.Hash
+		}
+		servers[i] = &pb.Server{
+			Id:      s.Id,
+			Name:    s.Name,
+			Image:   s.Image,
+			Fileset: &fileset,
+			Status:  status,
+		}
+	}
+
+	return &pb.ListServersResponse{
+		Servers: servers,
+	}, nil
+}
+
+func (c *Config) startServer(ctx context.Context, image, name, serverID string) error {
+	if err := PullImage(ctx, image); err != nil {
+		return err
+	}
+
+	hostPath := path.Join(c.DataPath, name)
+	return CreateContainer(ctx, image, name, hostPath, serverID)
+}

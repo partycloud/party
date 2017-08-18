@@ -2,11 +2,10 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/gosuri/uitable"
-	pb "github.com/partycloud/party/proto"
+	pb "github.com/partycloud/party/proto/daemon"
 	"github.com/spf13/cobra"
 )
 
@@ -31,9 +30,8 @@ func init() {
 	createServerCmd.Flags().StringVarP(&dataFrom, "data-from", "d", "", "Bootstrap server with data from this directory")
 
 	serversCmd.AddCommand(startServerCmd)
-	startServerCmd.Flags().StringVarP(&name, "name", "n", "", "Server name")
-	startServerCmd.Flags().StringVarP(&image, "image", "i", "", "Image name eg: partycloud/minecraft")
 
+	serversCmd.AddCommand(stopServerCmd)
 }
 
 var createServerCmd = &cobra.Command{
@@ -44,12 +42,18 @@ var createServerCmd = &cobra.Command{
 
 var startServerCmd = &cobra.Command{
 	Use:   "start",
-	Short: "Start up a guild server",
+	Short: "Start server",
 	RunE:  StartServer,
 }
 
+var stopServerCmd = &cobra.Command{
+	Use:   "stop",
+	Short: "Stop server",
+	RunE:  StopServer,
+}
+
 func ListServers(cmd *cobra.Command, args []string) error {
-	return DCall(func(client pb.PCDaemonClient) error {
+	return DCall(func(client pb.DaemonClient) error {
 		resp, err := client.ListServers(context.Background(), &pb.ListServersRequest{Page: 0, Limit: 100})
 		if err != nil {
 			return err
@@ -58,9 +62,9 @@ func ListServers(cmd *cobra.Command, args []string) error {
 		table := uitable.New()
 		table.MaxColWidth = 50
 
-		table.AddRow("ID", "NAME", "IMAGE")
+		table.AddRow("ID", "NAME", "IMAGE", "STATUS")
 		for _, s := range resp.Servers {
-			table.AddRow(s.Id, s.Name, s.Image)
+			table.AddRow(s.Id, s.Name, s.Image, s.Status)
 		}
 		fmt.Println(table)
 		return nil
@@ -68,7 +72,7 @@ func ListServers(cmd *cobra.Command, args []string) error {
 }
 
 func CreateServer(cmd *cobra.Command, args []string) error {
-	return DCall(func(client pb.PCDaemonClient) error {
+	return DCall(func(client pb.DaemonClient) error {
 		req := &pb.CreateServerRequest{
 			Image: image,
 			Name:  name,
@@ -82,7 +86,34 @@ func CreateServer(cmd *cobra.Command, args []string) error {
 	})
 }
 
-// @TODO this command shouldn't take image as an arg
 func StartServer(cmd *cobra.Command, args []string) error {
-	return errors.New("Not implemented")
+	id := args[0]
+
+	return DCall(func(client pb.DaemonClient) error {
+		req := &pb.StartServerRequest{
+			Id: id,
+		}
+		resp, err := client.StartServer(context.Background(), req)
+		if err != nil {
+			return err
+		}
+		fmt.Println(resp)
+		return nil
+	})
+}
+
+func StopServer(cmd *cobra.Command, args []string) error {
+	id := args[0]
+
+	return DCall(func(client pb.DaemonClient) error {
+		req := &pb.StopServerRequest{
+			Id: id,
+		}
+		resp, err := client.StopServer(context.Background(), req)
+		if err != nil {
+			return err
+		}
+		fmt.Println(resp)
+		return nil
+	})
 }

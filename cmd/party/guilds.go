@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	pb "github.com/partycloud/party/proto"
+	pb "github.com/partycloud/party/proto/daemon"
 
 	"github.com/gosuri/uitable"
 	"github.com/spf13/cobra"
@@ -30,7 +30,7 @@ func init() {
 
 func List(*cobra.Command, []string) error {
 	ctx := context.Background()
-	return DCall(func(client pb.PCDaemonClient) error {
+	return DCall(func(client pb.DaemonClient) error {
 		resp, err := client.ListGuilds(ctx, &pb.ListGuildsRequest{Page: 0, Limit: 100})
 		if err != nil {
 			return err
