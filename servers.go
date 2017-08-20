@@ -23,7 +23,7 @@ Advertise
 var cli *client.Client
 
 // CreateServer create and starts a new game server
-func (c *Config) CreateServer(ctx context.Context, req *pb.CreateServerRequest) (*pb.CreateServerResponse, error) {
+func (e *Environment) CreateServer(ctx context.Context, req *pb.CreateServerRequest) (*pb.CreateServerResponse, error) {
 	var resp *papi.CreateServerResponse
 	var err error
 	err = APICall(func(client papi.ApiClient) error {
@@ -37,7 +37,7 @@ func (c *Config) CreateServer(ctx context.Context, req *pb.CreateServerRequest) 
 		return nil, err
 	}
 
-	if err = c.startServer(ctx, req.Image, req.Name, resp.Id); err != nil {
+	if err = e.startServer(ctx, req.Image, req.Name, resp.Id); err != nil {
 		return nil, err
 	}
 
@@ -54,7 +54,7 @@ func (c *Config) CreateServer(ctx context.Context, req *pb.CreateServerRequest) 
 }
 
 // StartServer create and starts a new game server
-func (c *Config) StartServer(ctx context.Context, req *pb.StartServerRequest) (*pb.StartServerResponse, error) {
+func (e *Environment) StartServer(ctx context.Context, req *pb.StartServerRequest) (*pb.StartServerResponse, error) {
 	var resp *papi.GetServerResponse
 	var err error
 	err = APICall(func(client papi.ApiClient) error {
@@ -69,7 +69,7 @@ func (c *Config) StartServer(ctx context.Context, req *pb.StartServerRequest) (*
 	}
 	srv := resp.Server
 
-	if err = c.startServer(ctx, srv.Image, srv.Name, resp.Server.Id); err != nil {
+	if err = e.startServer(ctx, srv.Image, srv.Name, resp.Server.Id); err != nil {
 		return nil, err
 	}
 
@@ -86,7 +86,7 @@ func (c *Config) StartServer(ctx context.Context, req *pb.StartServerRequest) (*
 }
 
 // StopServer stops a game server
-func (c *Config) StopServer(ctx context.Context, req *pb.StopServerRequest) (*pb.StopServerResponse, error) {
+func (e *Environment) StopServer(ctx context.Context, req *pb.StopServerRequest) (*pb.StopServerResponse, error) {
 	var resp *papi.GetServerResponse
 	var err error
 	err = APICall(func(client papi.ApiClient) error {
@@ -157,11 +157,11 @@ func ListServers(ctx context.Context, req *pb.ListServersRequest) (*pb.ListServe
 	}, nil
 }
 
-func (c *Config) startServer(ctx context.Context, image, name, serverID string) error {
+func (e *Environment) startServer(ctx context.Context, image, name, serverID string) error {
 	if err := PullImage(ctx, image); err != nil {
 		return err
 	}
 
-	hostPath := path.Join(c.DataPath, name)
+	hostPath := path.Join(e.DataPath, name)
 	return CreateContainer(ctx, image, name, hostPath, serverID)
 }

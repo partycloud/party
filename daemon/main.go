@@ -13,11 +13,9 @@ import (
 	"runtime"
 	"strconv"
 	"syscall"
-	"time"
 
 	"golang.org/x/net/context"
 
-	"github.com/hashicorp/memberlist"
 	"github.com/partycloud/party"
 	pb "github.com/partycloud/party/proto/daemon"
 	"github.com/spf13/pflag"
@@ -29,7 +27,7 @@ import (
 )
 
 var cfgPath string
-var cfg party.Config
+var env party.Environment
 
 func init() { runtime.LockOSThread() }
 
@@ -39,8 +37,8 @@ func main() {
 
 	folders := configDirs.QueryFolders(configdir.Global)
 	cfgPath = folders[0].Path
-	cfg.DataPath = folders[0].Path
-	fmt.Println("Data stored at", cfg.DataPath)
+	env.DataPath = folders[0].Path
+	fmt.Println("Data stored at", env.DataPath)
 	err := os.MkdirAll(cfgPath, os.ModeDir)
 	if err != nil {
 		panic(err)
@@ -106,7 +104,9 @@ func main() {
 	}()
 
 	go RunDaemon(ctx)
-	go RunMemberList(ctx)
+	go func() {
+		env.MemberList = party.RunMemberList(ctx)
+	}()
 
 	trayhost.Initialize("Partycloud", iconData, menuItems)
 	trayhost.EnterLoop()
@@ -115,15 +115,15 @@ func main() {
 type DServer struct{}
 
 func (s *DServer) CreateServer(ctx context.Context, req *pb.CreateServerRequest) (*pb.CreateServerResponse, error) {
-	return cfg.CreateServer(ctx, req)
+	return env.CreateServer(ctx, req)
 }
 
 func (s *DServer) StartServer(ctx context.Context, req *pb.StartServerRequest) (*pb.StartServerResponse, error) {
-	return cfg.StartServer(ctx, req)
+	return env.StartServer(ctx, req)
 }
 
 func (s *DServer) StopServer(ctx context.Context, req *pb.StopServerRequest) (*pb.StopServerResponse, error) {
-	return cfg.StopServer(ctx, req)
+	return env.StopServer(ctx, req)
 }
 
 func (s *DServer) ListServers(ctx context.Context, req *pb.ListServersRequest) (*pb.ListServersResponse, error) {
@@ -132,6 +132,10 @@ func (s *DServer) ListServers(ctx context.Context, req *pb.ListServersRequest) (
 
 func (s *DServer) ListGuilds(ctx context.Context, req *pb.ListGuildsRequest) (*pb.ListGuildsResponse, error) {
 	return party.ListGuilds(ctx, req)
+}
+
+func (s *DServer) ListMembers(ctx context.Context, req *pb.ListMembersRequest) (*pb.ListMembersResponse, error) {
+	return env.ListMembers(ctx, req)
 }
 
 // Events sends updates to electron app
@@ -144,7 +148,13 @@ func (s *DServer) Events(stream pb.Daemon_EventsServer) error {
 		if err != nil {
 			return err
 		}
-		fmt.Println("recv", in.Type)
+
+		fmt.Println("recv", in)
+
+		// if err = party.HandleEvent(in); err != nil {
+		// 	return err
+		// }
+
 		stream.Send(&pb.Event{Type: "hi"})
 	}
 }
@@ -167,78 +177,4 @@ func RunDaemon(ctx context.Context) {
 	<-ctx.Done()
 	os.Exit(0) // This shouldn't be required but trayhost isn't stopping
 	fmt.Println("stopping daemon")
-}
-
-type MemberEventHandler struct {
-}
-
-func (h *MemberEventHandler) NotifyJoin(node *memberlist.Node) {
-	fmt.Printf("Join: %s %s\n", node.Name, node.Address())
-}
-
-func (h *MemberEventHandler) NotifyLeave(node *memberlist.Node) {
-	fmt.Printf("Leave: %s %s\n", node.Name, node.Address())
-}
-
-func (h *MemberEventHandler) NotifyUpdate(node *memberlist.Node) {
-	fmt.Printf("Update: %s %s\n", node.Name, node.Address())
-}
-
-func RunMemberList(ctx context.Context) {
-	guildId := ""
-
-	guildCh := make(chan *pb.Guild)
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-time.After(1 * time.Second):
-				guild, err := party.ConnectedGuild(ctx)
-				if err != nil {
-					panic(err)
-				}
-
-				if guild != nil && guild.Id != guildId {
-					// we changed guild
-					guildId = guild.Id
-					guildCh <- guild
-				}
-			}
-		}
-	}()
-
-	for guild := range guildCh {
-		fmt.Println("starting gossip", guild)
-
-		cfg := memberlist.DefaultLANConfig()
-		cfg.LogOutput = ioutil.Discard
-		cfg.BindAddr = guild.Ip
-		cfg.BindPort = viper.GetInt("gossip-port")
-		cfg.Events = &MemberEventHandler{}
-		cfg.Name = viper.GetString("name")
-
-		list, err := memberlist.Create(cfg)
-		if err != nil {
-			panic("Failed to create memberlist: " + err.Error())
-		}
-		fmt.Println("gossip listening", cfg.BindPort)
-		peers := viper.GetStringSlice("peers")
-		fmt.Println("finding friends", peers)
-
-		join := func() error {
-			_, err := list.Join(peers)
-			return err
-		}
-		for {
-			err = join()
-			if err == nil {
-				break
-			}
-			time.Sleep(1 * time.Second)
-		}
-
-		<-ctx.Done()
-		fmt.Println("stopping gossip")
-	}
 }

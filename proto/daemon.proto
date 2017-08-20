@@ -13,6 +13,7 @@ service Daemon {
   rpc ListServers(ListServersRequest) returns (ListServersResponse) {}
   rpc ListGuilds(ListGuildsRequest) returns (ListGuildsResponse) {}
 
+  rpc ListMembers(ListMembersRequest) returns (ListMembersResponse) {}
 }
 
 message Event {
@@ -71,6 +72,13 @@ message Fileset {
   bytes hash = 1;
 }
 
+message Guild {
+  string id = 1;
+  string name = 2;
+  bool connected = 3;
+  string ip = 4;
+}
+
 message ListGuildsRequest {
   uint32 page = 1;
   uint32 limit = 2;
@@ -80,9 +88,17 @@ message ListGuildsResponse {
   repeated Guild guilds = 1;
 }
 
-message Guild {
+message Member {
   string id = 1;
   string name = 2;
-  bool connected = 3;
-  string ip = 4;
+  string ip = 3;
+}
+
+message ListMembersRequest {
+  uint32 page = 1;
+  uint32 limit = 2;
+}
+
+message ListMembersResponse {
+  repeated Member members = 1;
 }

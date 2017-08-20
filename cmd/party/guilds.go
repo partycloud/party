@@ -18,14 +18,14 @@ import (
 
 var discordToken string
 
-var listCmd = &cobra.Command{
+var listGuilds = &cobra.Command{
 	Use:   "guilds",
 	Short: "Manage guilds",
 	RunE:  List,
 }
 
 func init() {
-	RootCmd.AddCommand(listCmd)
+	RootCmd.AddCommand(listGuilds)
 }
 
 func List(*cobra.Command, []string) error {
