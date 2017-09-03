@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -15,6 +16,7 @@ import (
 	"github.com/google/uuid"
 	pb "github.com/partycloud/party/proto/api"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 
 	_ "github.com/lib/pq"
 )
@@ -80,14 +82,20 @@ func (a *API) ListServers(ctx context.Context, req *pb.ListServersRequest) (*pb.
 // CreateServer creates a new server with no fileset hash
 func (a *API) CreateServer(ctx context.Context, req *pb.CreateServerRequest) (*pb.CreateServerResponse, error) {
 	fmt.Println(req)
+	var deviceID string
+	if md, ok := metadata.FromContext(ctx); ok {
+		key := md[":authority"]
+		deviceID = key[0]
+	}
+
 	id, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
 	}
 	row := a.db.QueryRowContext(ctx, `
-    INSERT INTO servers (id, created_at, updated_at, guild_id, name, image)
-      VALUES ($1, now(), now(), $2, $3, $4)
-      RETURNING id`, id.String(), guildID, req.Name, req.Image)
+    INSERT INTO servers (id, created_at, updated_at, guild_id, name, image, current_owner_id)
+      VALUES ($1, now(), now(), $2, $3, $4, $5)
+      RETURNING id`, id.String(), guildID, req.Name, req.Image, deviceID)
 	var returnID string
 	err = row.Scan(&returnID)
 	if err != nil {
@@ -99,11 +107,15 @@ func (a *API) CreateServer(ctx context.Context, req *pb.CreateServerRequest) (*p
 
 // SetFileset updates the hash for a server. Only the current server owner can set the fileset
 func (a *API) SetFileset(ctx context.Context, req *pb.SetFilesetRequest) (*pb.SetFilesetResponse, error) {
+	fmt.Println(req)
+	if req.Fileset.Hash == nil {
+		return nil, errors.New("hash required")
+	}
 	row := a.db.QueryRowContext(ctx, `
     UPDATE servers
-		SET fileset_hash=$1
+		SET fileset_hash=$1,
 		    fileset_bytes=$2
-		WHERE guild_id=$4 AND server_id=$5 RETURNING id`,
+		WHERE guild_id=$3 AND id=$4 RETURNING id`,
 		req.Fileset.Hash,
 		req.Fileset.Bytes,
 		guildID,
@@ -129,6 +141,11 @@ func (a *API) CreateDevice(ctx context.Context, req *pb.CreateDeviceRequest) (*p
 	}, nil
 }
 
+func interceptor(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+	fmt.Println(info)
+	return nil
+}
+
 func main() {
 	ctx := context.Background()
 	addr := "0.0.0.0:" + strconv.Itoa(*port)
@@ -139,7 +156,7 @@ func main() {
 	defer l.Close()
 	fmt.Println("Started grpc:", addr)
 
-	grpcSrv := grpc.NewServer()
+	grpcSrv := grpc.NewServer(grpc.StreamInterceptor(interceptor))
 	db, err := sql.Open("postgres", "postgres://localhost/partycloud_dev?sslmode=disable")
 	if err != nil {
 		log.Fatal(err)
@@ -176,9 +193,11 @@ func scanServer(row MultiScanner) (*pb.Server, error) {
 		srv.Fileset = &pb.Fileset{
 			Hash: serverRow.FilesetHash,
 		}
-		if err := serverRow.FilesetBytes.Scan(&srv.Fileset.Bytes); err != nil {
+		val, err := serverRow.FilesetBytes.Value()
+		if err != nil {
 			return nil, err
 		}
+		srv.Fileset.Bytes = uint64(val.(int64))
 	}
 
 	return srv, nil

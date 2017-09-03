@@ -131,6 +131,7 @@ func (e *Environment) StopServer(ctx context.Context, req *pb.StopServerRequest)
 		_, err = client.SetFileset(ctx, &papi.SetFilesetRequest{
 			ServerId: req.Id,
 			Fileset: &papi.Fileset{
+				Hash:  scan.Hash,
 				Bytes: scan.Bytes,
 			},
 		})
@@ -149,6 +150,7 @@ func (e *Environment) ListServers(ctx context.Context, req *pb.ListServersReques
 	err := e.APICall(func(client papi.ApiClient) error {
 		var err error
 		resp, err = client.ListServers(ctx, &papi.ListServersRequest{})
+		fmt.Println(resp)
 		return err
 	})
 	if err != nil {
@@ -178,6 +180,7 @@ func (e *Environment) ListServers(ctx context.Context, req *pb.ListServersReques
 
 		var fileset pb.Fileset
 		if s.Fileset != nil {
+			fileset.Bytes = s.Fileset.Bytes
 			fileset.Hash = s.Fileset.Hash
 		}
 		servers[i] = &pb.Server{

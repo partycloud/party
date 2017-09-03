@@ -15,7 +15,7 @@ type Hasher struct {
 
 type DirScan struct {
 	Hash  []byte
-	Bytes int64
+	Bytes uint64
 }
 
 func NewHasher(fs afero.Fs) *Hasher {
@@ -36,7 +36,7 @@ func (h *Hasher) HashRecursive(root string) (*DirScan, error) {
 			return err
 		}
 		defer f.Close()
-		scan.Bytes += info.Size()
+		scan.Bytes += uint64(info.Size())
 
 		if _, err := io.Copy(dhash, strings.NewReader(path)); err != nil {
 			return err

@@ -34,5 +34,4 @@ func NewFileSync(ctx context.Context, dataPath string) *Filesync {
 	fmt.Println(grpcSrv.GetServiceInfo())
 
 	return nil
-
 }

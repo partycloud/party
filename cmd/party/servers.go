@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/dustin/go-humanize"
 	"github.com/gosuri/uitable"
 	pb "github.com/partycloud/party/proto/daemon"
 	"github.com/spf13/cobra"
@@ -62,9 +63,16 @@ func ListServers(cmd *cobra.Command, args []string) error {
 		table := uitable.New()
 		table.MaxColWidth = 50
 
-		table.AddRow("ID", "NAME", "IMAGE", "STATUS", "HASH")
+		table.AddRow("ID", "NAME", "IMAGE", "STATUS", "HASH", "SIZE")
 		for _, s := range resp.Servers {
-			table.AddRow(s.Id, s.Name, s.Image, s.Status, s.Fileset.Hash)
+			table.AddRow(
+				s.Id,
+				s.Name,
+				s.Image,
+				s.Status,
+				fmt.Sprintf("%x", s.Fileset.Hash),
+				humanize.Bytes(s.Fileset.Bytes),
+			)
 		}
 		fmt.Println(table)
 		return nil

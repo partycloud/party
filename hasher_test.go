@@ -29,7 +29,7 @@ func assertHash(t *testing.T, actual []byte, expected string) {
 	}
 }
 
-func assertEqual(t *testing.T, actual, expected int64) {
+func assertEqual(t *testing.T, actual, expected uint64) {
 	if actual != expected {
 		t.Errorf("Expected %v was %v", expected, actual)
 	}
