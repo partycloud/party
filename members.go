@@ -8,6 +8,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/hashicorp/memberlist"
+	"github.com/hashicorp/serf/serf"
 	pb "github.com/partycloud/party/proto/daemon"
 	"github.com/spf13/viper"
 )
@@ -93,23 +94,22 @@ func RunMemberList(ctx context.Context) *MemberList {
 			memberList.log = logrus.WithFields(logrus.Fields{"me": name})
 			memberList.log.Infoln("starting gossip", guild)
 
-			cfg := memberlist.DefaultLANConfig()
+			cfg := serf.DefaultConfig()
+			cfg.NodeName = name
 			cfg.LogOutput = ioutil.Discard
-			cfg.BindAddr = guild.Ip
-			cfg.BindPort = viper.GetInt("gossip-port")
-			cfg.Events = memberList
-			cfg.Name = name
+			cfg.MemberlistConfig.BindAddr = guild.Ip
+			cfg.MemberlistConfig.BindPort = viper.GetInt("gossip-port")
 
-			list, err := memberlist.Create(cfg)
+			list, err := serf.Create(cfg)
 			if err != nil {
 				panic("Failed to create memberlist: " + err.Error())
 			}
-			memberList.log.Infoln("gossip listening", cfg.BindAddr, cfg.BindPort)
+			memberList.log.Infoln("gossip listening", cfg.MemberlistConfig.BindAddr, cfg.MemberlistConfig.BindPort)
 			peers := viper.GetStringSlice("peers")
 			memberList.log.Infoln("finding friends", peers)
 
 			join := func() error {
-				_, err := list.Join(peers)
+				_, err = list.Join(peers, true)
 				return err
 			}
 			for {

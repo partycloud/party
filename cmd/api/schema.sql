@@ -48,17 +48,17 @@ insert into guilds(
   '93afae596389f026'
 );
 
-insert into devices(id, created_at, updated_at, username) VALUES (
+insert into devices(id, created_at, updated_at, name) VALUES (
   'C6D62701-74F3-4095-A32C-91A9BD730E4E',
   current_timestamp, current_timestamp,
   'dave1'
 );
-insert into devices(id, created_at, updated_at, username) VALUES (
+insert into devices(id, created_at, updated_at, name) VALUES (
   'F093448D-F093-42C9-8966-8D6805F64B74',
   current_timestamp, current_timestamp,
   'dave2'
 );
-insert into devices(id, created_at, updated_at, username) VALUES (
+insert into devices(id, created_at, updated_at, name) VALUES (
   'BC44BBDE-C3B0-456B-8DFE-A2FDA90A581E',
   current_timestamp, current_timestamp,
   'dave3'
