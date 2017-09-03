@@ -64,12 +64,15 @@ message Server {
   string id = 1;
   string name = 2;
   string image = 3;
-  Fileset fileset = 4;
-  Status status = 5;
+  string current_owner_id = 4;
+
+  Fileset fileset = 5;
+  Status status = 6;
 }
 
 message Fileset {
   bytes hash = 1;
+  int64 bytes = 3;
 }
 
 message Guild {

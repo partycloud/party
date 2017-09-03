@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -37,8 +38,6 @@ func main() {
 
 	folders := configDirs.QueryFolders(configdir.Global)
 	cfgPath = folders[0].Path
-	env.DataPath = folders[0].Path
-	fmt.Println("Data stored at", env.DataPath)
 	err := os.MkdirAll(cfgPath, os.ModeDir)
 	if err != nil {
 		panic(err)
@@ -52,7 +51,13 @@ func main() {
 
 	pflag.Int("gossip-port", 7946, "")
 	viper.BindPFlag("gossip-port", pflag.Lookup("gossip-port"))
+	pflag.Int("sync-port", 8384, "")
+	viper.BindPFlag("sync-port", pflag.Lookup("sync-port"))
+	pflag.Int("sync-gui-port", 22000, "")
+	viper.BindPFlag("sync-gui-port", pflag.Lookup("sync-gui-port"))
 
+	pflag.String("device-id", "", "")
+	viper.BindPFlag("device-id", pflag.Lookup("device-id"))
 	pflag.String("name", "", "")
 	viper.BindPFlag("name", pflag.Lookup("name"))
 
@@ -103,10 +108,12 @@ func main() {
 		trayhost.Exit()
 	}()
 
+	env.DataPath = path.Join(folders[0].Path, strconv.Itoa(viper.GetInt("port")))
+	env.DeviceID = viper.GetString("device-id")
+
 	go RunDaemon(ctx)
-	go func() {
-		env.MemberList = party.RunMemberList(ctx)
-	}()
+	go RunMemberList(ctx)
+	go RunFilesync(ctx)
 
 	trayhost.Initialize("Partycloud", iconData, menuItems)
 	trayhost.EnterLoop()
@@ -127,7 +134,7 @@ func (s *DServer) StopServer(ctx context.Context, req *pb.StopServerRequest) (*p
 }
 
 func (s *DServer) ListServers(ctx context.Context, req *pb.ListServersRequest) (*pb.ListServersResponse, error) {
-	return party.ListServers(ctx, req)
+	return env.ListServers(ctx, req)
 }
 
 func (s *DServer) ListGuilds(ctx context.Context, req *pb.ListGuildsRequest) (*pb.ListGuildsResponse, error) {
@@ -177,4 +184,32 @@ func RunDaemon(ctx context.Context) {
 	<-ctx.Done()
 	os.Exit(0) // This shouldn't be required but trayhost isn't stopping
 	fmt.Println("stopping daemon")
+}
+
+func RunMemberList(ctx context.Context) {
+	env.MemberList = party.RunMemberList(ctx)
+}
+
+func RunFilesync(ctx context.Context) {
+	fs := party.NewFileSync(ctx, env.DataPath)
+	fmt.Println(fs)
+	env.LocalFilesets()
+
+	resp, err := env.ListServers(ctx, &pb.ListServersRequest{})
+	if err != nil {
+		panic(err)
+	}
+
+	serversStopped := true
+	for _, s := range resp.Servers {
+		if s.Status != pb.Server_STOPPED {
+			serversStopped = false
+		}
+	}
+
+	if serversStopped {
+		for _, s := range resp.Servers {
+			fmt.Println("no servers running, we should seed", s)
+		}
+	}
 }

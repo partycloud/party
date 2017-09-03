@@ -10,6 +10,7 @@ service Api {
   rpc SetFileset(SetFilesetRequest) returns (SetFilesetResponse) {}
   // rpc CreateFileset(CreateFilesetRequest) returns (CreateFilesetResponse) {}
   // rpc ListServers(ListServersRequest) returns (ListServersResponse) {}
+  rpc CreateDevice(CreateDeviceRequest) returns (CreateDeviceResponse) {}
 }
 
 message ListServersRequest {
@@ -31,11 +32,13 @@ message Server {
   string id = 1;
   string name = 2;
   string image = 3;
-  Fileset fileset = 4;
+  string current_owner_id = 4;
+  Fileset fileset = 5;
 }
 
 message Fileset {
   bytes hash = 1;
+  int64 bytes = 3;
 }
 
 message CreateServerRequest {
@@ -49,7 +52,15 @@ message CreateServerResponse {
 
 message SetFilesetRequest {
   string server_id = 1;
-  bytes hash = 2;
+  Fileset fileset = 2;
 }
 
 message SetFilesetResponse {}
+
+  message CreateDeviceRequest {
+    string name = 1;
+  }
+
+  message CreateDeviceResponse {
+    string id = 1;
+  }

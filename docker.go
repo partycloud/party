@@ -23,8 +23,9 @@ func PullImage(ctx context.Context, image string) error {
 }
 
 // CreateContainer makes a party container
-func CreateContainer(ctx context.Context, image, name, hostPath, partyID string) error {
-	return withClient(func(cli *client.Client) error {
+func CreateContainer(ctx context.Context, image, name, hostPath, partyID string) (*ServerInstance, error) {
+	var ct *types.Container
+	err := withClient(func(cli *client.Client) error {
 		err := os.MkdirAll(hostPath, os.ModePerm)
 		if err != nil {
 			return err
@@ -43,11 +44,11 @@ func CreateContainer(ctx context.Context, image, name, hostPath, partyID string)
 			},
 		}
 
-		container, err := findContainer(ctx, cli, partyID)
+		ct, err = findContainer(ctx, cli, partyID)
 		if err != nil {
 			return err
 		}
-		if container == nil {
+		if ct == nil {
 			netCfg := &network.NetworkingConfig{}
 			_, err = cli.ContainerCreate(ctx, containerCfg, hostCfg, netCfg, name)
 			if err != nil {
@@ -59,6 +60,13 @@ func CreateContainer(ctx context.Context, image, name, hostPath, partyID string)
 		fmt.Println("Starting container", name)
 		return cli.ContainerStart(ctx, name, types.ContainerStartOptions{})
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &ServerInstance{
+		HostPath: hostPath,
+	}, nil
 }
 
 // ListContainers lists docker containers that we own
@@ -76,18 +84,33 @@ func ListContainers(ctx context.Context) (containers []types.Container, err erro
 }
 
 // StopContainer does what it says on the tin
-func StopContainer(ctx context.Context, partyID string) error {
-	return withClient(func(cli *client.Client) error {
-		container, err := findContainer(ctx, cli, partyID)
+func StopContainer(ctx context.Context, partyID string) (*ServerInstance, error) {
+	var container *types.Container
+	err := withClient(func(cli *client.Client) error {
+		var err error
+		container, err = findContainer(ctx, cli, partyID)
 		if err != nil {
 			return err
 		}
-		if container != nil {
-			duration := time.Duration(60 * time.Second)
-			return cli.ContainerStop(ctx, container.ID, &duration)
+		if container == nil {
+			return nil
 		}
-		return nil
+
+		duration := time.Duration(60 * time.Second)
+		return cli.ContainerStop(ctx, container.ID, &duration)
 	})
+	if err != nil {
+		return nil, err
+	}
+	var hostPath string
+	for _, m := range container.Mounts {
+		if m.Destination == "/data" {
+			hostPath = m.Source
+		}
+	}
+	return &ServerInstance{
+		HostPath: hostPath,
+	}, nil
 }
 
 func findContainer(ctx context.Context, cli *client.Client, partyID string) (*types.Container, error) {

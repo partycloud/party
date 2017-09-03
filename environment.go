@@ -4,4 +4,5 @@ package party
 type Environment struct {
 	DataPath   string
 	MemberList *MemberList
+	DeviceID   string
 }

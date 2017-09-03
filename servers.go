@@ -3,11 +3,14 @@ package party
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"path"
+	"path/filepath"
 	"strings"
 
 	papi "github.com/partycloud/party/proto/api"
 	pb "github.com/partycloud/party/proto/daemon"
+	"github.com/spf13/afero"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -26,7 +29,7 @@ var cli *client.Client
 func (e *Environment) CreateServer(ctx context.Context, req *pb.CreateServerRequest) (*pb.CreateServerResponse, error) {
 	var resp *papi.CreateServerResponse
 	var err error
-	err = APICall(func(client papi.ApiClient) error {
+	err = e.APICall(func(client papi.ApiClient) error {
 		resp, err = client.CreateServer(ctx, &papi.CreateServerRequest{
 			Image: req.Image,
 			Name:  req.Name,
@@ -37,17 +40,25 @@ func (e *Environment) CreateServer(ctx context.Context, req *pb.CreateServerRequ
 		return nil, err
 	}
 
-	if err = e.startServer(ctx, req.Image, req.Name, resp.Id); err != nil {
+	srv, err := e.startServer(ctx, req.Image, req.Name, resp.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	scan, err := srv.ScanFileset()
+	if err != nil {
 		return nil, err
 	}
 
 	return &pb.CreateServerResponse{
 		Server: &pb.Server{
-			Id:    req.Name,
-			Image: req.Image,
-			Name:  req.Name,
+			Id:             req.Name,
+			Image:          req.Image,
+			Name:           req.Name,
+			CurrentOwnerId: e.DeviceID,
 			Fileset: &pb.Fileset{
-				Hash: []byte("1234"),
+				Bytes: scan.Bytes,
+				Hash:  scan.Hash,
 			},
 		},
 	}, nil
@@ -57,7 +68,7 @@ func (e *Environment) CreateServer(ctx context.Context, req *pb.CreateServerRequ
 func (e *Environment) StartServer(ctx context.Context, req *pb.StartServerRequest) (*pb.StartServerResponse, error) {
 	var resp *papi.GetServerResponse
 	var err error
-	err = APICall(func(client papi.ApiClient) error {
+	err = e.APICall(func(client papi.ApiClient) error {
 		fmt.Println("StartServer", req.Id)
 		resp, err = client.GetServer(ctx, &papi.GetServerRequest{
 			Id: req.Id,
@@ -67,19 +78,26 @@ func (e *Environment) StartServer(ctx context.Context, req *pb.StartServerReques
 	if err != nil {
 		return nil, err
 	}
-	srv := resp.Server
 
-	if err = e.startServer(ctx, srv.Image, srv.Name, resp.Server.Id); err != nil {
+	srv, err := e.startServer(ctx, resp.Server.Image, resp.Server.Name, resp.Server.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	scan, err := srv.ScanFileset()
+	if err != nil {
 		return nil, err
 	}
 
 	return &pb.StartServerResponse{
 		Server: &pb.Server{
-			Id:    srv.Id,
-			Image: srv.Image,
-			Name:  srv.Name,
+			Id:             resp.Server.Id,
+			Image:          resp.Server.Image,
+			Name:           resp.Server.Name,
+			CurrentOwnerId: e.DeviceID,
 			Fileset: &pb.Fileset{
-				Hash: []byte("1234"),
+				Bytes: scan.Bytes,
+				Hash:  scan.Hash,
 			},
 		},
 	}, nil
@@ -89,7 +107,7 @@ func (e *Environment) StartServer(ctx context.Context, req *pb.StartServerReques
 func (e *Environment) StopServer(ctx context.Context, req *pb.StopServerRequest) (*pb.StopServerResponse, error) {
 	var resp *papi.GetServerResponse
 	var err error
-	err = APICall(func(client papi.ApiClient) error {
+	err = e.APICall(func(client papi.ApiClient) error {
 		resp, err = client.GetServer(ctx, &papi.GetServerRequest{
 			Id: req.Id,
 		})
@@ -99,7 +117,26 @@ func (e *Environment) StopServer(ctx context.Context, req *pb.StopServerRequest)
 		return nil, err
 	}
 
-	if err = StopContainer(ctx, req.Id); err != nil {
+	srv, err := StopContainer(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	scan, err := srv.ScanFileset()
+	if err != nil {
+		return nil, err
+	}
+
+	err = e.APICall(func(client papi.ApiClient) error {
+		_, err = client.SetFileset(ctx, &papi.SetFilesetRequest{
+			ServerId: req.Id,
+			Fileset: &papi.Fileset{
+				Bytes: scan.Bytes,
+			},
+		})
+		return err
+	})
+	if err != nil {
 		return nil, err
 	}
 
@@ -107,9 +144,9 @@ func (e *Environment) StopServer(ctx context.Context, req *pb.StopServerRequest)
 }
 
 // ListServers calls the api and returns a list of persistent servers
-func ListServers(ctx context.Context, req *pb.ListServersRequest) (*pb.ListServersResponse, error) {
+func (e *Environment) ListServers(ctx context.Context, req *pb.ListServersRequest) (*pb.ListServersResponse, error) {
 	var resp *papi.ListServersResponse
-	err := APICall(func(client papi.ApiClient) error {
+	err := e.APICall(func(client papi.ApiClient) error {
 		var err error
 		resp, err = client.ListServers(ctx, &papi.ListServersRequest{})
 		return err
@@ -157,11 +194,36 @@ func ListServers(ctx context.Context, req *pb.ListServersRequest) (*pb.ListServe
 	}, nil
 }
 
-func (e *Environment) startServer(ctx context.Context, image, name, serverID string) error {
-	if err := PullImage(ctx, image); err != nil {
+func (e *Environment) LocalFilesets() error {
+	entries, err := ioutil.ReadDir(filepath.Join(e.DataPath, "servers"))
+	if err != nil {
 		return err
 	}
+	for _, e := range entries {
+		if e.IsDir() {
+			fmt.Println(e.Name())
+		}
+	}
 
-	hostPath := path.Join(e.DataPath, name)
+	return nil
+}
+
+type ServerInstance struct {
+	HostPath string
+}
+
+func (s *ServerInstance) ScanFileset() (*DirScan, error) {
+	fs := afero.NewOsFs()
+	h := NewHasher(fs)
+	fmt.Println("Hashing", s.HostPath)
+	return h.HashRecursive(s.HostPath)
+}
+
+func (e *Environment) startServer(ctx context.Context, image, name, serverID string) (*ServerInstance, error) {
+	if err := PullImage(ctx, image); err != nil {
+		return nil, err
+	}
+
+	hostPath := path.Join(e.DataPath, "servers", name)
 	return CreateContainer(ctx, image, name, hostPath, serverID)
 }

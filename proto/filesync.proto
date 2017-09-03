@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package filesync;
+
+// Filesync is the api file sync between potential server operators
+service Filesync {
+  rpc GetFile(GetFileRequest) returns (GetFileResponse) {}
+}
+
+message GetFileRequest {
+  string fs_id = 1;
+  string path = 2;
+}
+
+message GetFileResponse {
+  bytes data = 1;
+}

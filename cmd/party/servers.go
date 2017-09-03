@@ -62,9 +62,9 @@ func ListServers(cmd *cobra.Command, args []string) error {
 		table := uitable.New()
 		table.MaxColWidth = 50
 
-		table.AddRow("ID", "NAME", "IMAGE", "STATUS")
+		table.AddRow("ID", "NAME", "IMAGE", "STATUS", "HASH")
 		for _, s := range resp.Servers {
-			table.AddRow(s.Id, s.Name, s.Image, s.Status)
+			table.AddRow(s.Id, s.Name, s.Image, s.Status, s.Fileset.Hash)
 		}
 		fmt.Println(table)
 		return nil
