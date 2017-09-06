@@ -2,6 +2,7 @@ package party
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"time"
@@ -59,7 +60,7 @@ func (e *Environment) ListMembers(ctx context.Context, req *pb.ListMembersReques
 	}, nil
 }
 
-func RunMemberList(ctx context.Context) *MemberList {
+func (e *Environment) RunMemberList(ctx context.Context) *MemberList {
 	guildId := ""
 
 	guildCh := make(chan *pb.Guild)
@@ -99,11 +100,13 @@ func RunMemberList(ctx context.Context) *MemberList {
 			cfg.LogOutput = ioutil.Discard
 			cfg.MemberlistConfig.BindAddr = guild.Ip
 			cfg.MemberlistConfig.BindPort = viper.GetInt("gossip-port")
+			cfg.MemberlistConfig.LogOutput = ioutil.Discard
 
 			list, err := serf.Create(cfg)
 			if err != nil {
 				panic("Failed to create memberlist: " + err.Error())
 			}
+
 			memberList.log.Infoln("gossip listening", cfg.MemberlistConfig.BindAddr, cfg.MemberlistConfig.BindPort)
 			peers := viper.GetStringSlice("peers")
 			memberList.log.Infoln("finding friends", peers)
@@ -125,4 +128,9 @@ func RunMemberList(ctx context.Context) *MemberList {
 		}
 	}()
 	return memberList
+}
+
+func (m *MemberList) UpdateFileset(e *EventServerFilesetUpdate) error {
+	fmt.Println("Fileset updated")
+	return nil
 }

@@ -108,9 +108,11 @@ func main() {
 		trayhost.Exit()
 	}()
 
+	env.Events = make(chan party.Event, 1)
 	env.DataPath = path.Join(folders[0].Path, strconv.Itoa(viper.GetInt("port")))
 	env.DeviceID = viper.GetString("device-id")
 
+	go env.Pump(env.Events)
 	go RunDaemon(ctx)
 	go RunMemberList(ctx)
 	go RunFilesync(ctx)
@@ -187,7 +189,7 @@ func RunDaemon(ctx context.Context) {
 }
 
 func RunMemberList(ctx context.Context) {
-	env.MemberList = party.RunMemberList(ctx)
+	env.MemberList = env.RunMemberList(ctx)
 }
 
 func RunFilesync(ctx context.Context) {

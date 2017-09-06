@@ -127,6 +127,10 @@ func (e *Environment) StopServer(ctx context.Context, req *pb.StopServerRequest)
 		return nil, err
 	}
 
+	fmt.Println("notifying")
+	e.Events <- &EventServerFilesetUpdate{}
+	fmt.Println("notified")
+
 	err = e.APICall(func(client papi.ApiClient) error {
 		_, err = client.SetFileset(ctx, &papi.SetFilesetRequest{
 			ServerId: req.Id,

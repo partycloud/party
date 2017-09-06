@@ -5,4 +5,6 @@ type Environment struct {
 	DataPath   string
 	MemberList *MemberList
 	DeviceID   string
+
+	Events chan Event
 }
