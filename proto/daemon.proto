@@ -10,6 +10,7 @@ service Daemon {
   rpc CreateServer(CreateServerRequest) returns (CreateServerResponse) {}
   rpc StartServer(StartServerRequest) returns (StartServerResponse) {}
   rpc StopServer(StopServerRequest) returns (StopServerResponse) {}
+  rpc DeleteServer(DeleteServerRequest) returns (DeleteServerResponse) {}
   rpc ListServers(ListServersRequest) returns (ListServersResponse) {}
   rpc ListGuilds(ListGuildsRequest) returns (ListGuildsResponse) {}
 
@@ -32,6 +33,7 @@ message ListServersResponse {
 message CreateServerRequest {
   string image = 1;
   string name = 2;
+  string import_data_dir = 3;
 }
 
 message CreateServerResponse {
@@ -49,9 +51,12 @@ message StartServerResponse {
 message StopServerRequest {
   string id = 1;
 }
+message StopServerResponse {}
 
-message StopServerResponse {
+message DeleteServerRequest {
+  string id = 1;
 }
+message DeleteServerResponse {}
 
 message Server {
   enum Status {

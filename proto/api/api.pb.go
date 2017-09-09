@@ -12,14 +12,16 @@ It has these top-level messages:
 	ListServersResponse
 	GetServerRequest
 	GetServerResponse
-	Server
 	Fileset
 	CreateServerRequest
 	CreateServerResponse
+	DeleteServerRequest
+	DeleteServerResponse
 	SetFilesetRequest
 	SetFilesetResponse
 	CreateDeviceRequest
 	CreateDeviceResponse
+	Server
 */
 package api
 
@@ -99,6 +101,158 @@ func (m *GetServerResponse) GetServer() *Server {
 	return nil
 }
 
+type Fileset struct {
+	Hash  []byte `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
+	Bytes uint64 `protobuf:"varint,3,opt,name=bytes" json:"bytes,omitempty"`
+}
+
+func (m *Fileset) Reset()                    { *m = Fileset{} }
+func (m *Fileset) String() string            { return proto.CompactTextString(m) }
+func (*Fileset) ProtoMessage()               {}
+func (*Fileset) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+
+func (m *Fileset) GetHash() []byte {
+	if m != nil {
+		return m.Hash
+	}
+	return nil
+}
+
+func (m *Fileset) GetBytes() uint64 {
+	if m != nil {
+		return m.Bytes
+	}
+	return 0
+}
+
+type CreateServerRequest struct {
+	Name  string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	Image string `protobuf:"bytes,2,opt,name=image" json:"image,omitempty"`
+}
+
+func (m *CreateServerRequest) Reset()                    { *m = CreateServerRequest{} }
+func (m *CreateServerRequest) String() string            { return proto.CompactTextString(m) }
+func (*CreateServerRequest) ProtoMessage()               {}
+func (*CreateServerRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
+
+func (m *CreateServerRequest) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *CreateServerRequest) GetImage() string {
+	if m != nil {
+		return m.Image
+	}
+	return ""
+}
+
+type CreateServerResponse struct {
+	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+}
+
+func (m *CreateServerResponse) Reset()                    { *m = CreateServerResponse{} }
+func (m *CreateServerResponse) String() string            { return proto.CompactTextString(m) }
+func (*CreateServerResponse) ProtoMessage()               {}
+func (*CreateServerResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
+
+func (m *CreateServerResponse) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+type DeleteServerRequest struct {
+	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+}
+
+func (m *DeleteServerRequest) Reset()                    { *m = DeleteServerRequest{} }
+func (m *DeleteServerRequest) String() string            { return proto.CompactTextString(m) }
+func (*DeleteServerRequest) ProtoMessage()               {}
+func (*DeleteServerRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
+
+func (m *DeleteServerRequest) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+type DeleteServerResponse struct {
+}
+
+func (m *DeleteServerResponse) Reset()                    { *m = DeleteServerResponse{} }
+func (m *DeleteServerResponse) String() string            { return proto.CompactTextString(m) }
+func (*DeleteServerResponse) ProtoMessage()               {}
+func (*DeleteServerResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
+
+type SetFilesetRequest struct {
+	ServerId string   `protobuf:"bytes,1,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
+	Fileset  *Fileset `protobuf:"bytes,2,opt,name=fileset" json:"fileset,omitempty"`
+}
+
+func (m *SetFilesetRequest) Reset()                    { *m = SetFilesetRequest{} }
+func (m *SetFilesetRequest) String() string            { return proto.CompactTextString(m) }
+func (*SetFilesetRequest) ProtoMessage()               {}
+func (*SetFilesetRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
+
+func (m *SetFilesetRequest) GetServerId() string {
+	if m != nil {
+		return m.ServerId
+	}
+	return ""
+}
+
+func (m *SetFilesetRequest) GetFileset() *Fileset {
+	if m != nil {
+		return m.Fileset
+	}
+	return nil
+}
+
+type SetFilesetResponse struct {
+}
+
+func (m *SetFilesetResponse) Reset()                    { *m = SetFilesetResponse{} }
+func (m *SetFilesetResponse) String() string            { return proto.CompactTextString(m) }
+func (*SetFilesetResponse) ProtoMessage()               {}
+func (*SetFilesetResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{10} }
+
+type CreateDeviceRequest struct {
+	Name string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+}
+
+func (m *CreateDeviceRequest) Reset()                    { *m = CreateDeviceRequest{} }
+func (m *CreateDeviceRequest) String() string            { return proto.CompactTextString(m) }
+func (*CreateDeviceRequest) ProtoMessage()               {}
+func (*CreateDeviceRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{11} }
+
+func (m *CreateDeviceRequest) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+type CreateDeviceResponse struct {
+	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+}
+
+func (m *CreateDeviceResponse) Reset()                    { *m = CreateDeviceResponse{} }
+func (m *CreateDeviceResponse) String() string            { return proto.CompactTextString(m) }
+func (*CreateDeviceResponse) ProtoMessage()               {}
+func (*CreateDeviceResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{12} }
+
+func (m *CreateDeviceResponse) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
 type Server struct {
 	Id             string   `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
 	Name           string   `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
@@ -110,7 +264,7 @@ type Server struct {
 func (m *Server) Reset()                    { *m = Server{} }
 func (m *Server) String() string            { return proto.CompactTextString(m) }
 func (*Server) ProtoMessage()               {}
-func (*Server) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+func (*Server) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{13} }
 
 func (m *Server) GetId() string {
 	if m != nil {
@@ -147,147 +301,21 @@ func (m *Server) GetFileset() *Fileset {
 	return nil
 }
 
-type Fileset struct {
-	Hash  []byte `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
-	Bytes uint64 `protobuf:"varint,3,opt,name=bytes" json:"bytes,omitempty"`
-}
-
-func (m *Fileset) Reset()                    { *m = Fileset{} }
-func (m *Fileset) String() string            { return proto.CompactTextString(m) }
-func (*Fileset) ProtoMessage()               {}
-func (*Fileset) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
-
-func (m *Fileset) GetHash() []byte {
-	if m != nil {
-		return m.Hash
-	}
-	return nil
-}
-
-func (m *Fileset) GetBytes() uint64 {
-	if m != nil {
-		return m.Bytes
-	}
-	return 0
-}
-
-type CreateServerRequest struct {
-	Name  string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
-	Image string `protobuf:"bytes,2,opt,name=image" json:"image,omitempty"`
-}
-
-func (m *CreateServerRequest) Reset()                    { *m = CreateServerRequest{} }
-func (m *CreateServerRequest) String() string            { return proto.CompactTextString(m) }
-func (*CreateServerRequest) ProtoMessage()               {}
-func (*CreateServerRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
-
-func (m *CreateServerRequest) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
-func (m *CreateServerRequest) GetImage() string {
-	if m != nil {
-		return m.Image
-	}
-	return ""
-}
-
-type CreateServerResponse struct {
-	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
-}
-
-func (m *CreateServerResponse) Reset()                    { *m = CreateServerResponse{} }
-func (m *CreateServerResponse) String() string            { return proto.CompactTextString(m) }
-func (*CreateServerResponse) ProtoMessage()               {}
-func (*CreateServerResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
-
-func (m *CreateServerResponse) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
-
-type SetFilesetRequest struct {
-	ServerId string   `protobuf:"bytes,1,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
-	Fileset  *Fileset `protobuf:"bytes,2,opt,name=fileset" json:"fileset,omitempty"`
-}
-
-func (m *SetFilesetRequest) Reset()                    { *m = SetFilesetRequest{} }
-func (m *SetFilesetRequest) String() string            { return proto.CompactTextString(m) }
-func (*SetFilesetRequest) ProtoMessage()               {}
-func (*SetFilesetRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
-
-func (m *SetFilesetRequest) GetServerId() string {
-	if m != nil {
-		return m.ServerId
-	}
-	return ""
-}
-
-func (m *SetFilesetRequest) GetFileset() *Fileset {
-	if m != nil {
-		return m.Fileset
-	}
-	return nil
-}
-
-type SetFilesetResponse struct {
-}
-
-func (m *SetFilesetResponse) Reset()                    { *m = SetFilesetResponse{} }
-func (m *SetFilesetResponse) String() string            { return proto.CompactTextString(m) }
-func (*SetFilesetResponse) ProtoMessage()               {}
-func (*SetFilesetResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
-
-type CreateDeviceRequest struct {
-	Name string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
-}
-
-func (m *CreateDeviceRequest) Reset()                    { *m = CreateDeviceRequest{} }
-func (m *CreateDeviceRequest) String() string            { return proto.CompactTextString(m) }
-func (*CreateDeviceRequest) ProtoMessage()               {}
-func (*CreateDeviceRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{10} }
-
-func (m *CreateDeviceRequest) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
-type CreateDeviceResponse struct {
-	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
-}
-
-func (m *CreateDeviceResponse) Reset()                    { *m = CreateDeviceResponse{} }
-func (m *CreateDeviceResponse) String() string            { return proto.CompactTextString(m) }
-func (*CreateDeviceResponse) ProtoMessage()               {}
-func (*CreateDeviceResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{11} }
-
-func (m *CreateDeviceResponse) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
-
 func init() {
 	proto.RegisterType((*ListServersRequest)(nil), "api.ListServersRequest")
 	proto.RegisterType((*ListServersResponse)(nil), "api.ListServersResponse")
 	proto.RegisterType((*GetServerRequest)(nil), "api.GetServerRequest")
 	proto.RegisterType((*GetServerResponse)(nil), "api.GetServerResponse")
-	proto.RegisterType((*Server)(nil), "api.Server")
 	proto.RegisterType((*Fileset)(nil), "api.Fileset")
 	proto.RegisterType((*CreateServerRequest)(nil), "api.CreateServerRequest")
 	proto.RegisterType((*CreateServerResponse)(nil), "api.CreateServerResponse")
+	proto.RegisterType((*DeleteServerRequest)(nil), "api.DeleteServerRequest")
+	proto.RegisterType((*DeleteServerResponse)(nil), "api.DeleteServerResponse")
 	proto.RegisterType((*SetFilesetRequest)(nil), "api.SetFilesetRequest")
 	proto.RegisterType((*SetFilesetResponse)(nil), "api.SetFilesetResponse")
 	proto.RegisterType((*CreateDeviceRequest)(nil), "api.CreateDeviceRequest")
 	proto.RegisterType((*CreateDeviceResponse)(nil), "api.CreateDeviceResponse")
+	proto.RegisterType((*Server)(nil), "api.Server")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -301,9 +329,10 @@ const _ = grpc.SupportPackageIsVersion4
 // Client API for Api service
 
 type ApiClient interface {
+	CreateServer(ctx context.Context, in *CreateServerRequest, opts ...grpc.CallOption) (*CreateServerResponse, error)
 	ListServers(ctx context.Context, in *ListServersRequest, opts ...grpc.CallOption) (*ListServersResponse, error)
 	GetServer(ctx context.Context, in *GetServerRequest, opts ...grpc.CallOption) (*GetServerResponse, error)
-	CreateServer(ctx context.Context, in *CreateServerRequest, opts ...grpc.CallOption) (*CreateServerResponse, error)
+	DeleteServer(ctx context.Context, in *DeleteServerRequest, opts ...grpc.CallOption) (*DeleteServerResponse, error)
 	SetFileset(ctx context.Context, in *SetFilesetRequest, opts ...grpc.CallOption) (*SetFilesetResponse, error)
 	// rpc CreateFileset(CreateFilesetRequest) returns (CreateFilesetResponse) {}
 	// rpc ListServers(ListServersRequest) returns (ListServersResponse) {}
@@ -316,6 +345,15 @@ type apiClient struct {
 
 func NewApiClient(cc *grpc.ClientConn) ApiClient {
 	return &apiClient{cc}
+}
+
+func (c *apiClient) CreateServer(ctx context.Context, in *CreateServerRequest, opts ...grpc.CallOption) (*CreateServerResponse, error) {
+	out := new(CreateServerResponse)
+	err := grpc.Invoke(ctx, "/api.Api/CreateServer", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *apiClient) ListServers(ctx context.Context, in *ListServersRequest, opts ...grpc.CallOption) (*ListServersResponse, error) {
@@ -336,9 +374,9 @@ func (c *apiClient) GetServer(ctx context.Context, in *GetServerRequest, opts ..
 	return out, nil
 }
 
-func (c *apiClient) CreateServer(ctx context.Context, in *CreateServerRequest, opts ...grpc.CallOption) (*CreateServerResponse, error) {
-	out := new(CreateServerResponse)
-	err := grpc.Invoke(ctx, "/api.Api/CreateServer", in, out, c.cc, opts...)
+func (c *apiClient) DeleteServer(ctx context.Context, in *DeleteServerRequest, opts ...grpc.CallOption) (*DeleteServerResponse, error) {
+	out := new(DeleteServerResponse)
+	err := grpc.Invoke(ctx, "/api.Api/DeleteServer", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -366,9 +404,10 @@ func (c *apiClient) CreateDevice(ctx context.Context, in *CreateDeviceRequest, o
 // Server API for Api service
 
 type ApiServer interface {
+	CreateServer(context.Context, *CreateServerRequest) (*CreateServerResponse, error)
 	ListServers(context.Context, *ListServersRequest) (*ListServersResponse, error)
 	GetServer(context.Context, *GetServerRequest) (*GetServerResponse, error)
-	CreateServer(context.Context, *CreateServerRequest) (*CreateServerResponse, error)
+	DeleteServer(context.Context, *DeleteServerRequest) (*DeleteServerResponse, error)
 	SetFileset(context.Context, *SetFilesetRequest) (*SetFilesetResponse, error)
 	// rpc CreateFileset(CreateFilesetRequest) returns (CreateFilesetResponse) {}
 	// rpc ListServers(ListServersRequest) returns (ListServersResponse) {}
@@ -377,6 +416,24 @@ type ApiServer interface {
 
 func RegisterApiServer(s *grpc.Server, srv ApiServer) {
 	s.RegisterService(&_Api_serviceDesc, srv)
+}
+
+func _Api_CreateServer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateServerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ApiServer).CreateServer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Api/CreateServer",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ApiServer).CreateServer(ctx, req.(*CreateServerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _Api_ListServers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -415,20 +472,20 @@ func _Api_GetServer_Handler(srv interface{}, ctx context.Context, dec func(inter
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Api_CreateServer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateServerRequest)
+func _Api_DeleteServer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteServerRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ApiServer).CreateServer(ctx, in)
+		return srv.(ApiServer).DeleteServer(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.Api/CreateServer",
+		FullMethod: "/api.Api/DeleteServer",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ApiServer).CreateServer(ctx, req.(*CreateServerRequest))
+		return srv.(ApiServer).DeleteServer(ctx, req.(*DeleteServerRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -474,6 +531,10 @@ var _Api_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*ApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "CreateServer",
+			Handler:    _Api_CreateServer_Handler,
+		},
+		{
 			MethodName: "ListServers",
 			Handler:    _Api_ListServers_Handler,
 		},
@@ -482,8 +543,8 @@ var _Api_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Api_GetServer_Handler,
 		},
 		{
-			MethodName: "CreateServer",
-			Handler:    _Api_CreateServer_Handler,
+			MethodName: "DeleteServer",
+			Handler:    _Api_DeleteServer_Handler,
 		},
 		{
 			MethodName: "SetFileset",
@@ -501,32 +562,34 @@ var _Api_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("api.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 432 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x54, 0x4d, 0x6f, 0x9b, 0x40,
-	0x14, 0x0c, 0xe0, 0xd8, 0xe5, 0xd9, 0x8a, 0x92, 0x17, 0x9a, 0x50, 0x7a, 0x89, 0xb6, 0x6a, 0xe4,
-	0x5e, 0x72, 0x48, 0x2e, 0x3d, 0x44, 0x8a, 0xfa, 0xad, 0x4a, 0x95, 0x2a, 0x91, 0x4b, 0x6f, 0x16,
-	0x36, 0xaf, 0xf5, 0x4a, 0x35, 0x50, 0x76, 0xed, 0xaa, 0xff, 0xa3, 0xbf, 0xad, 0xbf, 0xa7, 0x62,
-	0x77, 0xc1, 0x2c, 0x20, 0xdf, 0x60, 0xde, 0x30, 0x3b, 0x33, 0xfb, 0x04, 0xf8, 0x49, 0xc1, 0x6f,
-	0x8a, 0x32, 0x97, 0x39, 0x7a, 0x49, 0xc1, 0x59, 0x00, 0xf8, 0x85, 0x0b, 0xf9, 0x48, 0xe5, 0x8e,
-	0x4a, 0x11, 0xd3, 0xaf, 0x2d, 0x09, 0xc9, 0xee, 0xe1, 0xdc, 0x42, 0x45, 0x91, 0x67, 0x82, 0xf0,
-	0x25, 0x4c, 0x84, 0x86, 0x42, 0xe7, 0xca, 0x9b, 0x4f, 0x6f, 0xa7, 0x37, 0x95, 0x9c, 0xa6, 0xc5,
-	0xf5, 0x8c, 0x31, 0x38, 0xfd, 0x44, 0xe6, 0x63, 0xa3, 0x88, 0x27, 0xe0, 0xf2, 0x34, 0x74, 0xae,
-	0x9c, 0xb9, 0x1f, 0xbb, 0x3c, 0x65, 0xaf, 0xe1, 0xac, 0xc5, 0x31, 0xfa, 0x2f, 0x60, 0xac, 0x35,
-	0x14, 0xb1, 0x23, 0x6f, 0x46, 0xec, 0xaf, 0x03, 0x63, 0x0d, 0x75, 0x45, 0x11, 0x61, 0x94, 0x25,
-	0x1b, 0x0a, 0x5d, 0x85, 0xa8, 0x67, 0x0c, 0xe0, 0x98, 0x6f, 0x92, 0x1f, 0x14, 0x7a, 0x0a, 0xd4,
-	0x2f, 0x38, 0x87, 0xd3, 0xd5, 0xb6, 0x2c, 0x29, 0x93, 0x8b, 0xfc, 0x77, 0x46, 0xe5, 0x82, 0xa7,
-	0xe1, 0x48, 0x11, 0x4e, 0x0c, 0xfe, 0xb5, 0x82, 0x3f, 0xa7, 0x78, 0x0d, 0x93, 0xef, 0xfc, 0x27,
-	0x09, 0x92, 0xe1, 0xb1, 0x32, 0x35, 0x53, 0xa6, 0x3e, 0x6a, 0x2c, 0xae, 0x87, 0xec, 0x0e, 0x26,
-	0x06, 0xab, 0x6c, 0xac, 0x13, 0xb1, 0x56, 0xc6, 0x66, 0xb1, 0x7a, 0xae, 0x6c, 0x2c, 0xff, 0x48,
-	0x12, 0xca, 0xc6, 0x28, 0xd6, 0x2f, 0xec, 0x01, 0xce, 0xdf, 0x95, 0x94, 0x48, 0xb2, 0xcb, 0xaa,
-	0x73, 0x38, 0x43, 0x39, 0xdc, 0x56, 0x0e, 0x76, 0x0d, 0x81, 0x2d, 0x60, 0x9a, 0xec, 0xd6, 0xfd,
-	0x0d, 0xce, 0x1e, 0x49, 0xd6, 0xa6, 0xcd, 0x31, 0xcf, 0xc1, 0xd7, 0x9d, 0x2e, 0x1a, 0xee, 0x13,
-	0x0d, 0xd8, 0xb9, 0xdd, 0x43, 0xb9, 0x03, 0xc0, 0xb6, 0xb2, 0x3e, 0x9f, 0xbd, 0xaa, 0x83, 0xbd,
-	0xa7, 0x1d, 0x5f, 0xd1, 0x81, 0x60, 0xfb, 0x08, 0x35, 0x75, 0x38, 0xc2, 0xed, 0x3f, 0x17, 0xbc,
-	0x37, 0x05, 0xc7, 0xb7, 0x30, 0x6d, 0xed, 0x26, 0x5e, 0x2a, 0x5b, 0xfd, 0x1d, 0x8e, 0xc2, 0xfe,
-	0xc0, 0x98, 0x3b, 0xc2, 0x7b, 0xf0, 0x9b, 0xed, 0xc3, 0xa7, 0x8a, 0xd8, 0xdd, 0xd8, 0xe8, 0xa2,
-	0x0b, 0x37, 0x5f, 0x7f, 0x80, 0x59, 0xbb, 0x74, 0xd4, 0x27, 0x0d, 0x5c, 0x64, 0xf4, 0x6c, 0x60,
-	0xd2, 0xc8, 0x3c, 0x00, 0xec, 0x9b, 0xc3, 0x0b, 0xb3, 0xeb, 0x9d, 0x4b, 0x8a, 0x2e, 0x7b, 0x78,
-	0xdf, 0x87, 0x6e, 0xce, 0xf2, 0x61, 0xf5, 0x6e, 0xf9, 0xb0, 0x6b, 0x66, 0x47, 0xcb, 0xb1, 0xfa,
-	0x1d, 0xdc, 0xfd, 0x0f, 0x00, 0x00, 0xff, 0xff, 0x0d, 0x22, 0x2c, 0x0e, 0x1b, 0x04, 0x00, 0x00,
+	// 464 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x54, 0xc1, 0x6e, 0xd3, 0x40,
+	0x10, 0x8d, 0xe3, 0x34, 0x21, 0x93, 0xa8, 0x6a, 0x27, 0x21, 0x35, 0xe6, 0x12, 0x2d, 0x6a, 0x65,
+	0x2e, 0x3d, 0xa4, 0x17, 0x0e, 0x95, 0x2a, 0xa0, 0x05, 0x21, 0x21, 0x21, 0xb9, 0x17, 0x6e, 0x95,
+	0xdb, 0x0c, 0x74, 0xa5, 0xd6, 0x36, 0xde, 0x6d, 0x11, 0xff, 0xc1, 0x95, 0x7f, 0x45, 0xde, 0x5d,
+	0xbb, 0xbb, 0x1b, 0x37, 0x37, 0x7b, 0xe6, 0xed, 0xf3, 0xbc, 0xb7, 0x6f, 0x0c, 0xe3, 0xac, 0xe4,
+	0xc7, 0x65, 0x55, 0xc8, 0x02, 0xc3, 0xac, 0xe4, 0x6c, 0x0e, 0xf8, 0x95, 0x0b, 0x79, 0x49, 0xd5,
+	0x23, 0x55, 0x22, 0xa5, 0x5f, 0x0f, 0x24, 0x24, 0x3b, 0x85, 0x99, 0x53, 0x15, 0x65, 0x91, 0x0b,
+	0xc2, 0x43, 0x18, 0x09, 0x5d, 0x8a, 0x82, 0x65, 0x98, 0x4c, 0x56, 0x93, 0xe3, 0x9a, 0x4e, 0xc3,
+	0xd2, 0xa6, 0xc7, 0x18, 0xec, 0x7d, 0x26, 0x73, 0xd8, 0x30, 0xe2, 0x2e, 0xf4, 0xf9, 0x3a, 0x0a,
+	0x96, 0x41, 0x32, 0x4e, 0xfb, 0x7c, 0xcd, 0xde, 0xc1, 0xbe, 0x85, 0x31, 0xfc, 0x6f, 0x60, 0xa8,
+	0x39, 0x14, 0xd0, 0xa3, 0x37, 0x2d, 0x76, 0x02, 0xa3, 0x4f, 0xfc, 0x8e, 0x04, 0x49, 0x44, 0x18,
+	0xdc, 0x66, 0xe2, 0x56, 0xa1, 0xa7, 0xa9, 0x7a, 0xc6, 0x39, 0xec, 0x5c, 0xff, 0x91, 0x24, 0xa2,
+	0x70, 0x19, 0x24, 0x83, 0x54, 0xbf, 0xb0, 0x33, 0x98, 0x7d, 0xac, 0x28, 0x93, 0xe4, 0x4e, 0x85,
+	0x30, 0xc8, 0xb3, 0x7b, 0x32, 0x73, 0xa9, 0xe7, 0x9a, 0x80, 0xdf, 0x67, 0x3f, 0x29, 0xea, 0xab,
+	0xa2, 0x7e, 0x61, 0x47, 0x30, 0x77, 0x09, 0xcc, 0xc8, 0xbe, 0xae, 0x43, 0x98, 0x9d, 0xd3, 0x1d,
+	0xf9, 0x1f, 0xf2, 0x61, 0x0b, 0x98, 0xbb, 0x30, 0x4d, 0xc7, 0xbe, 0xc3, 0xfe, 0x25, 0x49, 0xa3,
+	0xaf, 0x39, 0xfc, 0x1a, 0xc6, 0x5a, 0xfb, 0x55, 0xcb, 0xf1, 0x42, 0x17, 0xbe, 0xac, 0xf1, 0x08,
+	0x46, 0x3f, 0x34, 0x5c, 0x0d, 0x3c, 0x59, 0x4d, 0x95, 0x69, 0x0d, 0x45, 0xd3, 0xac, 0x2f, 0xda,
+	0x66, 0x36, 0xdf, 0x7b, 0xdb, 0xf8, 0x72, 0x4e, 0x8f, 0xfc, 0x86, 0xb6, 0xf8, 0xf2, 0xe4, 0x40,
+	0x03, 0x7d, 0xc6, 0x81, 0xbf, 0x01, 0x0c, 0xb5, 0x2a, 0xbf, 0xd5, 0xd2, 0xf6, 0xbb, 0xec, 0x0e,
+	0x2d, 0xbb, 0x31, 0x81, 0xbd, 0x9b, 0x87, 0xaa, 0xa2, 0x5c, 0x5e, 0x15, 0xbf, 0x73, 0xad, 0x7c,
+	0xa0, 0x00, 0xbb, 0xa6, 0xfe, 0xad, 0x2e, 0xbb, 0xfa, 0x77, 0xb6, 0xe8, 0x5f, 0xfd, 0x0b, 0x21,
+	0x7c, 0x5f, 0x72, 0xbc, 0x80, 0xa9, 0x7d, 0x91, 0x18, 0x29, 0x78, 0x47, 0x38, 0xe2, 0x57, 0x1d,
+	0x1d, 0x63, 0x5b, 0x0f, 0x3f, 0xc0, 0xc4, 0xda, 0x10, 0x3c, 0x50, 0xd8, 0xcd, 0x4d, 0x8a, 0xa3,
+	0xcd, 0x46, 0xcb, 0x71, 0x0a, 0xe3, 0x76, 0x07, 0xf0, 0xa5, 0x02, 0xfa, 0x7b, 0x13, 0x2f, 0xfc,
+	0x72, 0x7b, 0xfa, 0x02, 0xa6, 0x76, 0x84, 0x8c, 0x90, 0x8e, 0xf0, 0x19, 0x21, 0x9d, 0x79, 0xeb,
+	0xe1, 0x19, 0xc0, 0x53, 0x2e, 0x70, 0x61, 0x36, 0xce, 0x8b, 0x60, 0x7c, 0xb0, 0x51, 0xb7, 0xe7,
+	0xb0, 0x73, 0xe1, 0x18, 0xea, 0xa4, 0xca, 0x31, 0xd4, 0x0d, 0x11, 0xeb, 0x5d, 0x0f, 0xd5, 0x4f,
+	0xe9, 0xe4, 0x7f, 0x00, 0x00, 0x00, 0xff, 0xff, 0xe6, 0xfc, 0xfa, 0x8b, 0xa1, 0x04, 0x00, 0x00,
 }

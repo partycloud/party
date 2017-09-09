@@ -4,9 +4,11 @@ package api;
 
 // Api is the api for the api.partycloud.com service
 service Api {
+  rpc CreateServer(CreateServerRequest) returns (CreateServerResponse) {}
   rpc ListServers(ListServersRequest) returns (ListServersResponse) {}
   rpc GetServer(GetServerRequest) returns (GetServerResponse) {}
-  rpc CreateServer(CreateServerRequest) returns (CreateServerResponse) {}
+  rpc DeleteServer(DeleteServerRequest) returns (DeleteServerResponse) {}
+
   rpc SetFileset(SetFilesetRequest) returns (SetFilesetResponse) {}
   // rpc CreateFileset(CreateFilesetRequest) returns (CreateFilesetResponse) {}
   // rpc ListServers(ListServersRequest) returns (ListServersResponse) {}
@@ -28,14 +30,6 @@ message GetServerResponse {
   Server server = 1;
 }
 
-message Server {
-  string id = 1;
-  string name = 2;
-  string image = 3;
-  string current_owner_id = 4;
-  Fileset fileset = 5;
-}
-
 message Fileset {
   bytes hash = 1;
   uint64 bytes = 3;
@@ -50,6 +44,11 @@ message CreateServerResponse {
   string id = 1;
 }
 
+message DeleteServerRequest {
+  string id = 1;
+}
+message DeleteServerResponse {}
+
 message SetFilesetRequest {
   string server_id = 1;
   Fileset fileset = 2;
@@ -57,10 +56,18 @@ message SetFilesetRequest {
 
 message SetFilesetResponse {}
 
-  message CreateDeviceRequest {
-    string name = 1;
-  }
+message CreateDeviceRequest {
+  string name = 1;
+}
 
-  message CreateDeviceResponse {
-    string id = 1;
-  }
+message CreateDeviceResponse {
+  string id = 1;
+}
+
+message Server {
+  string id = 1;
+  string name = 2;
+  string image = 3;
+  string current_owner_id = 4;
+  Fileset fileset = 5;
+}

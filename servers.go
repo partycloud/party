@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -26,28 +27,31 @@ Advertise
 var cli *client.Client
 
 // CreateServer create and starts a new game server
-func (e *Environment) CreateServer(ctx context.Context, req *pb.CreateServerRequest) (*pb.CreateServerResponse, error) {
-	var resp *papi.CreateServerResponse
-	var err error
+func (e *Environment) CreateServer(ctx context.Context, req *pb.CreateServerRequest) (resp *pb.CreateServerResponse, err error) {
+	var apiResp *papi.CreateServerResponse
 	err = e.APICall(func(client papi.ApiClient) error {
-		resp, err = client.CreateServer(ctx, &papi.CreateServerRequest{
+		apiResp, err = client.CreateServer(ctx, &papi.CreateServerRequest{
 			Image: req.Image,
 			Name:  req.Name,
 		})
 		return err
 	})
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	srv, err := e.startServer(ctx, req.Image, req.Name, resp.Id)
+	if err = e.prepareHostPath(apiResp.Id, req.ImportDataDir); err != nil {
+		return
+	}
+
+	srv, err := e.startServer(ctx, req.Image, req.Name, apiResp.Id)
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	scan, err := srv.ScanFileset()
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	return &pb.CreateServerResponse{
@@ -201,6 +205,30 @@ func (e *Environment) ListServers(ctx context.Context, req *pb.ListServersReques
 	}, nil
 }
 
+// StopServer stops a game server
+func (e *Environment) DeleteServer(ctx context.Context, req *pb.DeleteServerRequest) (*pb.DeleteServerResponse, error) {
+	err := DeleteContainer(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	err = e.APICall(func(client papi.ApiClient) error {
+		_, err = client.DeleteServer(ctx, &papi.DeleteServerRequest{
+			Id: req.Id,
+		})
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err := os.RemoveAll(e.serverPath(req.Id)); err != nil {
+		return nil, err
+	}
+
+	return &pb.DeleteServerResponse{}, nil
+}
+
 func (e *Environment) LocalFilesets() error {
 	entries, err := ioutil.ReadDir(filepath.Join(e.DataPath, "servers"))
 	if err != nil {
@@ -231,6 +259,17 @@ func (e *Environment) startServer(ctx context.Context, image, name, serverID str
 		return nil, err
 	}
 
-	hostPath := path.Join(e.DataPath, "servers", name)
-	return CreateContainer(ctx, image, name, hostPath, serverID)
+	return CreateContainer(ctx, image, name, e.serverPath(serverID), serverID)
+}
+
+func (e *Environment) prepareHostPath(serverId, importDir string) error {
+	if importDir == "" {
+		return nil
+	}
+
+	return CopyDir(importDir, e.serverPath(serverId))
+}
+
+func (e *Environment) serverPath(id string) string {
+	return path.Join(e.DataPath, "servers", id)
 }

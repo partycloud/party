@@ -34,7 +34,7 @@ type ServerRow struct {
 // @TODO get this from auth header
 const guildID = "C4F6DCBE-D855-4A19-BF49-8C8ECD0303CA"
 
-var port = flag.Int("port", 3000, "listen port")
+var port = flag.Int("port", 5000, "listen port")
 
 // API is the main grpc api
 type API struct {
@@ -103,6 +103,17 @@ func (a *API) CreateServer(ctx context.Context, req *pb.CreateServerRequest) (*p
 	}
 
 	return &pb.CreateServerResponse{Id: returnID}, nil
+}
+
+// DeleteServer deletes the server entry
+func (a *API) DeleteServer(ctx context.Context, req *pb.DeleteServerRequest) (*pb.DeleteServerResponse, error) {
+	fmt.Println(req)
+	_, err := a.db.ExecContext(ctx, `DELETE FROM servers WHERE id=$1`, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.DeleteServerResponse{}, nil
 }
 
 // SetFileset updates the hash for a server. Only the current server owner can set the fileset

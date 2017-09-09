@@ -35,6 +35,7 @@ func CreateContainer(ctx context.Context, image, name, hostPath, partyID string)
 			Labels: map[string]string{"party": partyID},
 		}
 		hostCfg := &container.HostConfig{
+			PublishAllPorts: true,
 			Mounts: []mount.Mount{
 				mount.Mount{
 					Source: hostPath,
@@ -111,6 +112,30 @@ func StopContainer(ctx context.Context, partyID string) (*ServerInstance, error)
 	return &ServerInstance{
 		HostPath: hostPath,
 	}, nil
+}
+
+// DeleteContainer stops and deletes the container
+func DeleteContainer(ctx context.Context, partyID string) error {
+	var container *types.Container
+	return withClient(func(cli *client.Client) error {
+		var err error
+		container, err = findContainer(ctx, cli, partyID)
+		if err != nil {
+			return err
+		}
+		if container == nil {
+			return nil
+		}
+
+		duration := time.Duration(60 * time.Second)
+		if err = cli.ContainerStop(ctx, container.ID, &duration); err != nil {
+			return err
+		}
+
+		return cli.ContainerRemove(ctx, container.ID, types.ContainerRemoveOptions{
+			Force: true,
+		})
+	})
 }
 
 func findContainer(ctx context.Context, cli *client.Client, partyID string) (*types.Container, error) {

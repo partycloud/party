@@ -1,4 +1,4 @@
-all: proto/api/api.pb.go proto/daemon/daemon.pb.go proto/filesync/filesync.pb.go
+all: proto/api/api.pb.go proto/daemon/daemon.pb.go proto/filesync/filesync.pb.go gui/app/pb/daemon.d.ts
 
 proto/api/api.pb.go: proto/api.proto
 	mkdir -p proto/api
@@ -21,9 +21,15 @@ build/Partycloud.app/Contents/MacOS/main: $(foreach dir, ., $(wildcard $(dir)/*.
 	mkdir -p build/Partycloud.app/Contents/MacOS
 	go build -o build/Partycloud.app/Contents/MacOS/main ./daemon
 
+gui/app/pb/daemon.d.ts: proto/daemon.proto
+	mkdir -p gui/app/pb
+	./gui/node_modules/.bin/pbjs -t static-module -w commonjs proto/daemon.proto -o gui/app/pb/daemon.js
+	./gui/node_modules/.bin/pbts -o gui/app/pb/daemon.d.ts gui/app/pb/daemon.js
+
 .PHONY: clean
 clean:
 	rm -rf build/Partycloud.app
 	rm -rf proto/api
 	rm -rf proto/daemon
 	rm -rf proto/filesync
+	rm -rf gui/app/pb

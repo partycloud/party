@@ -21,20 +21,6 @@ var serversCmd = &cobra.Command{
 	RunE:  ListServers,
 }
 
-func init() {
-	RootCmd.AddCommand(serversCmd)
-
-	serversCmd.AddCommand(createServerCmd)
-	// createServerCmd.Flags().StringVarP(&guild, "guild", "g", "", "Name or ID of guild")
-	createServerCmd.Flags().StringVarP(&name, "name", "n", "", "Server name")
-	createServerCmd.Flags().StringVarP(&image, "image", "i", "", "Image name eg: partycloud/minecraft")
-	createServerCmd.Flags().StringVarP(&dataFrom, "data-from", "d", "", "Bootstrap server with data from this directory")
-
-	serversCmd.AddCommand(startServerCmd)
-
-	serversCmd.AddCommand(stopServerCmd)
-}
-
 var createServerCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a new server right meow",
@@ -51,6 +37,26 @@ var stopServerCmd = &cobra.Command{
 	Use:   "stop",
 	Short: "Stop server",
 	RunE:  StopServer,
+}
+
+var delServerCmd = &cobra.Command{
+	Use:   "delete",
+	Short: "Delete server",
+	RunE:  DeleteServer,
+}
+
+func init() {
+	RootCmd.AddCommand(serversCmd)
+
+	serversCmd.AddCommand(createServerCmd)
+	// createServerCmd.Flags().StringVarP(&guild, "guild", "g", "", "Name or ID of guild")
+	createServerCmd.Flags().StringVarP(&name, "name", "n", "", "Server name")
+	createServerCmd.Flags().StringVarP(&image, "image", "i", "", "Image name eg: partycloud/minecraft")
+	createServerCmd.Flags().StringVarP(&dataFrom, "data-from", "d", "", "Bootstrap server with data from this directory")
+
+	serversCmd.AddCommand(startServerCmd)
+	serversCmd.AddCommand(stopServerCmd)
+	serversCmd.AddCommand(delServerCmd)
 }
 
 func ListServers(cmd *cobra.Command, args []string) error {
@@ -82,8 +88,9 @@ func ListServers(cmd *cobra.Command, args []string) error {
 func CreateServer(cmd *cobra.Command, args []string) error {
 	return DCall(func(client pb.DaemonClient) error {
 		req := &pb.CreateServerRequest{
-			Image: image,
-			Name:  name,
+			Image:         image,
+			Name:          name,
+			ImportDataDir: dataFrom,
 		}
 		resp, err := client.CreateServer(context.Background(), req)
 		if err != nil {
@@ -118,6 +125,22 @@ func StopServer(cmd *cobra.Command, args []string) error {
 			Id: id,
 		}
 		resp, err := client.StopServer(context.Background(), req)
+		if err != nil {
+			return err
+		}
+		fmt.Println(resp)
+		return nil
+	})
+}
+
+func DeleteServer(cmd *cobra.Command, args []string) error {
+	id := args[0]
+
+	return DCall(func(client pb.DaemonClient) error {
+		req := &pb.DeleteServerRequest{
+			Id: id,
+		}
+		resp, err := client.DeleteServer(context.Background(), req)
 		if err != nil {
 			return err
 		}

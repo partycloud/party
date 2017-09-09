@@ -7,7 +7,7 @@ import (
 
 // APICall wraps calls to the daemon
 func (e *Environment) APICall(fn func(client pb.ApiClient) error) error {
-	addr := "0.0.0.0:3000"
+	addr := "0.0.0.0:5000"
 	conn, err := grpc.Dial(addr, grpc.WithInsecure(), grpc.WithAuthority(e.DeviceID))
 	if err != nil {
 		return err

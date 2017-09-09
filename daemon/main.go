@@ -139,6 +139,10 @@ func (s *DServer) ListServers(ctx context.Context, req *pb.ListServersRequest) (
 	return env.ListServers(ctx, req)
 }
 
+func (s *DServer) DeleteServer(ctx context.Context, req *pb.DeleteServerRequest) (*pb.DeleteServerResponse, error) {
+	return env.DeleteServer(ctx, req)
+}
+
 func (s *DServer) ListGuilds(ctx context.Context, req *pb.ListGuildsRequest) (*pb.ListGuildsResponse, error) {
 	return party.ListGuilds(ctx, req)
 }
