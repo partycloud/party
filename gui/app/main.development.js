@@ -1,3 +1,5 @@
+const path = require('path');
+const url = require('url');
 const { app, BrowserWindow, Menu, shell } = require('electron');
 
 let menu;
@@ -45,7 +47,14 @@ app.on('ready', () =>
     height: 1024
   });
 
-  mainWindow.loadURL(`file://${__dirname}/app.html`);
+  const args = process.argv.filter(a => a.includes('='));
+
+  mainWindow.loadURL(url.format({
+    pathname: path.join(__dirname, 'app.html'),
+    protocol: 'file:',
+    slashes: true,
+    search: args.join('&'),
+  }))
 
   mainWindow.webContents.on('did-finish-load', () => {
     mainWindow.show();

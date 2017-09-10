@@ -23,8 +23,11 @@ build/Partycloud.app/Contents/MacOS/main: $(foreach dir, ., $(wildcard $(dir)/*.
 
 gui/app/pb/daemon.d.ts: proto/daemon.proto
 	mkdir -p gui/app/pb
-	./gui/node_modules/.bin/pbjs -t static-module -w commonjs proto/daemon.proto -o gui/app/pb/daemon.js
-	./gui/node_modules/.bin/pbts -o gui/app/pb/daemon.d.ts gui/app/pb/daemon.js
+	protoc \
+		--plugin=protoc-gen-ts=./gui/node_modules/.bin/protoc-gen-ts \
+		--js_out=import_style=commonjs,binary:gui/app/pb \
+		--ts_out=service=true:gui/app/pb \
+		-I ./proto proto/daemon.proto
 
 .PHONY: clean
 clean:

@@ -6,7 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"path"
@@ -17,11 +17,13 @@ import (
 
 	"golang.org/x/net/context"
 
+	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/partycloud/party"
 	pb "github.com/partycloud/party/proto/daemon"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/grpclog"
 
 	"github.com/shibukawa/configdir"
 	"github.com/shurcooL/trayhost"
@@ -40,7 +42,7 @@ func main() {
 	cfgPath = folders[0].Path
 	err := os.MkdirAll(cfgPath, os.ModeDir)
 	if err != nil {
-		panic(err)
+		errorExit(err)
 	}
 
 	viper.SetConfigName("config")
@@ -93,7 +95,7 @@ func main() {
 
 	iconData, err := ioutil.ReadFile("Icon.png")
 	if err != nil {
-		panic(err)
+		errorExit(err)
 	}
 
 	sigchan := make(chan os.Signal, 1)
@@ -174,19 +176,25 @@ func (s *DServer) Events(stream pb.Daemon_EventsServer) error {
 
 // RunDaemon starts local daemon process
 func RunDaemon(ctx context.Context) {
-	addr := "0.0.0.0:" + strconv.Itoa(viper.GetInt("port"))
-	l, err := net.Listen("tcp", addr)
-	if err != nil {
-		panic(err)
-	}
-	defer l.Close()
-	fmt.Println("Started grpc:", addr)
-
 	grpcSrv := grpc.NewServer()
 	srv := &DServer{}
 	pb.RegisterDaemonServer(grpcSrv, srv)
 
-	go grpcSrv.Serve(l)
+	wrappedServer := grpcweb.WrapServer(grpcSrv)
+	handler := func(resp http.ResponseWriter, req *http.Request) {
+		wrappedServer.ServeHTTP(resp, req)
+	}
+	httpServer := http.Server{
+		Addr:    fmt.Sprintf(":%d", viper.GetInt("port")),
+		Handler: http.HandlerFunc(handler),
+	}
+
+	go func() {
+		if err := httpServer.ListenAndServe(); err != nil {
+			grpclog.Fatalf("failed starting http server: %v", err)
+		}
+	}()
+
 	<-ctx.Done()
 	os.Exit(0) // This shouldn't be required but trayhost isn't stopping
 	fmt.Println("stopping daemon")
@@ -203,7 +211,7 @@ func RunFilesync(ctx context.Context) {
 
 	resp, err := env.ListServers(ctx, &pb.ListServersRequest{})
 	if err != nil {
-		panic(err)
+		errorExit(err)
 	}
 
 	serversStopped := true
@@ -218,4 +226,9 @@ func RunFilesync(ctx context.Context) {
 			fmt.Println("no servers running, we should seed", s)
 		}
 	}
+}
+
+func errorExit(err error) {
+	fmt.Fprintf(os.Stderr, "error: %v\n", err)
+	os.Exit(1)
 }

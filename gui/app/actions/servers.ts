@@ -1,54 +1,35 @@
-import { actionCreator, actionCreatorVoid } from './helpers';
-import { daemon as pb } from '../pb/daemon';
-import { RPCImpl }  from "protobufjs";
-// import * as net from "net";
+import * as api from '../api'
+import { actionCreator, actionCreatorVoid } from './helpers'
+import {
+  ListServersRequest,
+  Server,
+  StartServerRequest,
+  StartServerResponse,
+} from "../pb/daemon_pb"
+import { Daemon } from "../pb/daemon_pb_service";
 
-export const create = actionCreatorVoid('SERVERS_CREATE');
-export const requestServers = actionCreatorVoid('SERVERS_REQUEST');
-export const receiveServers = actionCreator<pb.IServer[]>('SERVERS_RECEIVE');
 
-const grpc = require('grpc');
-const PROTO_PATH = __dirname + '/../proto/daemon.proto'
-//
-// // const sock = '/Users/dave/Library/Application Support/Partycloud/Data/party.sock'
-//
-console.log(process.argv)
-const addr = new URLSearchParams(window.location.search).get('--gui-addr')
-const _client = new grpc.load(PROTO_PATH).daemon.Daemon(addr, grpc.credentials.createInsecure());
-//
-// // const call = client.events()
-// // call.on('data', function(e) {
-// //   console.log('got', e)
-// // });
-// // call.on('end', function() {
-// //   console.log('end')
-// // });
-// // call.on('status', function(status) {
-// //   console.log('status', status)
-// // });
-// // call.write({ type: 'yo' })
-// //
-// // console.log('send')
+export const serverStartReceive = actionCreator<StartServerResponse.AsObject>('SERVER_START_RECEIVE')
+export const serverStartRequest = actionCreator<StartServerRequest.AsObject>('SERVER_START_REQUEST')
+export const serversReceive = actionCreator<Server.AsObject[]>('SERVERS_RECEIVE')
+export const serversRequest = actionCreatorVoid('SERVERS_REQUEST')
 
-function createRpcClient() : RPCImpl {
-  return async function(method, requestData, callback) {
-    console.log({method, requestData})
-    const resp = await _client.listServers()
-    console.log({resp})
-    callback(null, pb.ListServersResponse.encodeDelimited({
-      servers: [],
-    }).finish());
+export function startServer(id: string) {
+  return async (dispatch: Function) => {
+    const request = new StartServerRequest();
+    request.setId(id);
+
+    dispatch(serverStartRequest(request.toObject()))
+    const resp = await api.apiCall(Daemon.StartServer, request)
+    dispatch(serverStartReceive(resp.toObject()))   
   }
 }
 
-
-
-const client = pb.Daemon.create(createRpcClient(), true, true);
-
 export function fetchServers() {
   return async (dispatch: Function) => {
-    dispatch(requestServers())
-    const servers = await client.listServers({})
-    dispatch(receiveServers(servers.servers));
+    dispatch(serversRequest())
+    const request = new ListServersRequest()
+    const resp = await api.fetchServers(request)
+    dispatch(serversReceive(resp.toObject().serversList))
   };
 }

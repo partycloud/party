@@ -83,7 +83,7 @@ func (a *API) ListServers(ctx context.Context, req *pb.ListServersRequest) (*pb.
 func (a *API) CreateServer(ctx context.Context, req *pb.CreateServerRequest) (*pb.CreateServerResponse, error) {
 	fmt.Println(req)
 	var deviceID string
-	if md, ok := metadata.FromContext(ctx); ok {
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
 		key := md[":authority"]
 		deviceID = key[0]
 	}
@@ -165,7 +165,7 @@ func main() {
 		panic(err)
 	}
 	defer l.Close()
-	fmt.Println("Started grpc:", addr)
+	fmt.Println("[api] Started grpc:", addr)
 
 	grpcSrv := grpc.NewServer(grpc.StreamInterceptor(interceptor))
 	db, err := sql.Open("postgres", "postgres://localhost/partycloud_dev?sslmode=disable")

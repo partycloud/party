@@ -1,10 +1,12 @@
-import * as React from 'react';
 import { RouteComponentProps } from 'react-router';
-import { Server } from '../actions/server'
+import * as React from 'react';
+import { Server } from "../pb/daemon_pb";
+
 
 export interface Props extends RouteComponentProps<any> {
   fetchServers(): void,
-  servers: Server[]
+  startServer(id: string): void,
+  servers: ReadonlyArray<Server.AsObject>
 }
 
 export class Servers extends React.Component<Props> {
@@ -13,10 +15,19 @@ export class Servers extends React.Component<Props> {
   }
 
   render() {
-    const { servers } = this.props;
+    const { servers, startServer } = this.props;
     return (
       <ul>
-        {servers.map(s => <li>{s}</li>)}
+        {servers.map(s => 
+          <li key={s.id}>
+            {s.name}
+            {s.status}
+            {s.status === Server.Status.RUNNING && <a>[stop]</a>}
+            {s.status === Server.Status.STOPPED && 
+              <button onClick={() => startServer(s.id)}>[start]</button>
+            }
+          </li>
+        )}
       </ul>
     );
   }
