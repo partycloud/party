@@ -2,6 +2,7 @@
 
 set -eou pipefail
 
+rm -f build/Partycloud.app/Contents/MacOS/main
 make build/Partycloud.app
 sh -c "
 cd ./build/Partycloud.app/Contents/MacOS

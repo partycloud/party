@@ -18,6 +18,7 @@ service Daemon {
 }
 
 message GetEventsRequest {}
+
 message Event {
   oneof payload {
     EventServerUpdate serverUpdate = 1;

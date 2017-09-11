@@ -83,6 +83,8 @@ func (e *Environment) StartServer(ctx context.Context, req *pb.StartServerReques
 		return nil, err
 	}
 
+	e.Events <- NewEventServerStatusUpdate(resp.Server.Id, pb.Server_STARTING)
+
 	srv, err := e.startServer(ctx, resp.Server.Image, resp.Server.Name, resp.Server.Id)
 	if err != nil {
 		return nil, err
@@ -109,6 +111,8 @@ func (e *Environment) StartServer(ctx context.Context, req *pb.StartServerReques
 
 // StopServer stops a game server
 func (e *Environment) StopServer(ctx context.Context, req *pb.StopServerRequest) (*pb.StopServerResponse, error) {
+	e.Events <- NewEventServerStatusUpdate(req.Id, pb.Server_STOPPING)
+
 	var resp *papi.GetServerResponse
 	var err error
 	err = e.APICall(func(client papi.ApiClient) error {
@@ -132,7 +136,7 @@ func (e *Environment) StopServer(ctx context.Context, req *pb.StopServerRequest)
 	}
 
 	fmt.Println("notifying")
-	e.Events <- &EventServerFilesetUpdate{}
+	e.Events <- NewEventFilesetUpdate(req.Id, scan)
 	fmt.Println("notified")
 
 	err = e.APICall(func(client papi.ApiClient) error {

@@ -130,7 +130,7 @@ func (e *Environment) RunMemberList(ctx context.Context) *MemberList {
 	return memberList
 }
 
-func (m *MemberList) UpdateFileset(e *EventServerFilesetUpdate) error {
+func (m *MemberList) UpdateFileset(e *pb.EventServerUpdate) error {
 	fmt.Println("Fileset updated")
 	return nil
 }

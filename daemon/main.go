@@ -13,7 +13,6 @@ import (
 	"runtime"
 	"strconv"
 	"syscall"
-	"time"
 
 	"golang.org/x/net/context"
 
@@ -110,11 +109,12 @@ func main() {
 		trayhost.Exit()
 	}()
 
-	env.Events = make(chan party.Event, 1)
+	env.Events = make(chan *pb.Event, 1)
 	env.DataPath = path.Join(folders[0].Path, strconv.Itoa(viper.GetInt("port")))
 	env.DeviceID = viper.GetString("device-id")
 
 	go env.Pump(env.Events)
+	go env.PumpDocker(ctx)
 	go RunDaemon(ctx)
 	go RunMemberList(ctx)
 	go RunFilesync(ctx)
@@ -155,23 +155,25 @@ func (s *DServer) ListMembers(ctx context.Context, req *pb.ListMembersRequest) (
 
 // Events sends updates to electron app
 func (s *DServer) Events(req *pb.GetEventsRequest, stream pb.Daemon_EventsServer) error {
-	for {
-		resp, err := env.ListServers(context.Background(), &pb.ListServersRequest{})
-		if err != nil {
-			log.Fatalln(err)
-		} else {
-			for _, s := range resp.Servers {
-				stream.Send(&pb.Event{
-					Payload: &pb.Event_ServerUpdate{
-						ServerUpdate: &pb.EventServerUpdate{
-							Server: s,
-						},
+	resp, err := env.ListServers(context.Background(), &pb.ListServersRequest{})
+	if err != nil {
+		log.Fatalln(err)
+	} else {
+		for _, s := range resp.Servers {
+			stream.Send(&pb.Event{
+				Payload: &pb.Event_ServerUpdate{
+					ServerUpdate: &pb.EventServerUpdate{
+						Server: s,
 					},
-				})
-			}
+				},
+			})
 		}
-		time.Sleep(100 * time.Millisecond)
 	}
+
+	for event := range env.Events {
+		stream.Send(event)
+	}
+	return nil
 }
 
 // RunDaemon starts local daemon process

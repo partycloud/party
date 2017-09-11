@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	pb "github.com/partycloud/party/proto/daemon"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
@@ -13,6 +15,29 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 )
+
+// PumpDocker listens and posts interesting events
+func (e *Environment) PumpDocker(ctx context.Context) error {
+	return withClient(func(cli *client.Client) error {
+		events, _ := cli.Events(ctx, types.EventsOptions{})
+
+		for event := range events {
+			if partyID, ok := event.Actor.Attributes["party"]; ok {
+				switch event.Action {
+				case "start":
+					e.Events <- NewEventServerStatusUpdate(partyID, pb.Server_RUNNING)
+				case "stop":
+					e.Events <- NewEventServerStatusUpdate(partyID, pb.Server_STOPPED)
+				}
+				fmt.Println("action:", event.Action)
+				fmt.Println("actor:", event.Actor)
+				fmt.Println("status:", event.Status)
+				fmt.Println("type:", event.Type)
+			}
+		}
+		return nil
+	})
+}
 
 // PullImage does what it says on the tin
 func PullImage(ctx context.Context, image string) error {
@@ -97,7 +122,7 @@ func StopContainer(ctx context.Context, partyID string) (*ServerInstance, error)
 			return nil
 		}
 
-		duration := time.Duration(60 * time.Second)
+		duration := time.Duration(10 * time.Second)
 		return cli.ContainerStop(ctx, container.ID, &duration)
 	})
 	if err != nil {
