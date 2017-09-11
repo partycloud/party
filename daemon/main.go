@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -14,6 +13,7 @@ import (
 	"runtime"
 	"strconv"
 	"syscall"
+	"time"
 
 	"golang.org/x/net/context"
 
@@ -154,23 +154,23 @@ func (s *DServer) ListMembers(ctx context.Context, req *pb.ListMembersRequest) (
 }
 
 // Events sends updates to electron app
-func (s *DServer) Events(stream pb.Daemon_EventsServer) error {
+func (s *DServer) Events(req *pb.GetEventsRequest, stream pb.Daemon_EventsServer) error {
 	for {
-		in, err := stream.Recv()
-		if err == io.EOF {
-			return nil
-		}
+		resp, err := env.ListServers(context.Background(), &pb.ListServersRequest{})
 		if err != nil {
-			return err
+			log.Fatalln(err)
+		} else {
+			for _, s := range resp.Servers {
+				stream.Send(&pb.Event{
+					Payload: &pb.Event_ServerUpdate{
+						ServerUpdate: &pb.EventServerUpdate{
+							Server: s,
+						},
+					},
+				})
+			}
 		}
-
-		fmt.Println("recv", in)
-
-		// if err = party.HandleEvent(in); err != nil {
-		// 	return err
-		// }
-
-		stream.Send(&pb.Event{Type: "hi"})
+		time.Sleep(100 * time.Millisecond)
 	}
 }
 

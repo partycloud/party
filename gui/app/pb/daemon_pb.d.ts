@@ -3,10 +3,29 @@
 
 import * as jspb from "google-protobuf";
 
-export class Event extends jspb.Message {
-  getType(): string;
-  setType(value: string): void;
+export class GetEventsRequest extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetEventsRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: GetEventsRequest): GetEventsRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: GetEventsRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetEventsRequest;
+  static deserializeBinaryFromReader(message: GetEventsRequest, reader: jspb.BinaryReader): GetEventsRequest;
+}
 
+export namespace GetEventsRequest {
+  export type AsObject = {
+  }
+}
+
+export class Event extends jspb.Message {
+  hasServerupdate(): boolean;
+  clearServerupdate(): void;
+  getServerupdate(): EventServerUpdate | undefined;
+  setServerupdate(value?: EventServerUpdate): void;
+
+  getPayloadCase(): Event.PayloadCase;
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Event.AsObject;
   static toObject(includeInstance: boolean, msg: Event): Event.AsObject;
@@ -19,7 +38,34 @@ export class Event extends jspb.Message {
 
 export namespace Event {
   export type AsObject = {
-    type: string,
+    serverupdate?: EventServerUpdate.AsObject,
+  }
+
+  export enum PayloadCase {
+    PAYLOAD_NOT_SET = 0,
+    SERVERUPDATE = 1,
+  }
+}
+
+export class EventServerUpdate extends jspb.Message {
+  hasServer(): boolean;
+  clearServer(): void;
+  getServer(): Server | undefined;
+  setServer(value?: Server): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): EventServerUpdate.AsObject;
+  static toObject(includeInstance: boolean, msg: EventServerUpdate): EventServerUpdate.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: EventServerUpdate, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): EventServerUpdate;
+  static deserializeBinaryFromReader(message: EventServerUpdate, reader: jspb.BinaryReader): EventServerUpdate;
+}
+
+export namespace EventServerUpdate {
+  export type AsObject = {
+    server?: Server.AsObject,
   }
 }
 

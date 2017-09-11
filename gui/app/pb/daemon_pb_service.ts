@@ -9,9 +9,9 @@ export namespace Daemon {
   export class Events {
     static readonly methodName = "Events";
     static readonly service = Daemon;
-    static readonly requestStream = true;
+    static readonly requestStream = false;
     static readonly responseStream = true;
-    static readonly requestType = daemon_pb.Event;
+    static readonly requestType = daemon_pb.GetEventsRequest;
     static readonly responseType = daemon_pb.Event;
   }
   export class CreateServer {

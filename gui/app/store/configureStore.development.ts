@@ -1,11 +1,12 @@
-import { createStore, applyMiddleware, compose } from 'redux';
-import thunk from 'redux-thunk';
-import { createHashHistory } from 'history';
-import { routerMiddleware, push } from 'react-router-redux';
-import { createLogger } from 'redux-logger';
+import * as serversActions from '../actions/servers';
+import { eventStream } from '../actions/servers'
 import rootReducer from '../reducers';
+import { createHashHistory } from 'history';
+import { push, routerMiddleware } from 'react-router-redux';
+import { createLogger } from 'redux-logger';
+import thunk from 'redux-thunk';
+import { applyMiddleware, compose, createStore } from 'redux';
 
-import * as serverActions from '../actions/server';
 
 declare const window: Window & {
   __REDUX_DEVTOOLS_EXTENSION_COMPOSE__?(a: any): void;
@@ -17,7 +18,7 @@ declare const module: NodeModule & {
   }
 };
 
-const actionCreators = Object.assign({}, serverActions, {
+const actionCreators = Object.assign({}, serversActions, {
   push
 });
 
@@ -39,7 +40,7 @@ const composeEnhancers: typeof compose = window.__REDUX_DEVTOOLS_EXTENSION_COMPO
   compose;
 /* eslint-enable no-underscore-dangle */
 const enhancer = composeEnhancers(
-  applyMiddleware(thunk, router, logger)
+  applyMiddleware(thunk, router, logger, eventStream)
 );
 
 export = {

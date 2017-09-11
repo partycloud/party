@@ -4,7 +4,7 @@ package daemon;
 
 // Daemon is the api for the local agent on each players machine
 service Daemon {
-  rpc Events(stream Event) returns (stream Event) {}
+  rpc Events(GetEventsRequest) returns (stream Event) {}
   // rpc CreateGuild(CreateGuildRequest) returns (CreateGuildResponse) {}
 
   rpc CreateServer(CreateServerRequest) returns (CreateServerResponse) {}
@@ -17,8 +17,15 @@ service Daemon {
   rpc ListMembers(ListMembersRequest) returns (ListMembersResponse) {}
 }
 
+message GetEventsRequest {}
 message Event {
-  string type = 1;
+  oneof payload {
+    EventServerUpdate serverUpdate = 1;
+  }
+}
+
+message EventServerUpdate {
+  Server server = 1;
 }
 
 message ListServersRequest {
