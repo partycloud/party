@@ -7,10 +7,10 @@ import (
 	"net"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/hashicorp/memberlist"
 	"github.com/hashicorp/serf/serf"
 	pb "github.com/partycloud/party/proto/daemon"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 

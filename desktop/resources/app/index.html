@@ -1,0 +1,14 @@
+<script>
+    // This will wait for the astilectron namespace to be ready
+    document.addEventListener('astilectron-ready', function() {
+      console.log('ready')
+
+        // This will listen to messages sent by GO
+        astilectron.listen(function(message) {
+          console.log('got', message)
+
+            // This will send a message back to GO
+            astilectron.send("I'm good bro")
+        });
+    })
+</script>

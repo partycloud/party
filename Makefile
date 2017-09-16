@@ -19,7 +19,7 @@ build/Partycloud.app: build/Partycloud.app/Contents/MacOS/main
 
 build/Partycloud.app/Contents/MacOS/main: $(foreach dir, ., $(wildcard $(dir)/*.go))
 	mkdir -p build/Partycloud.app/Contents/MacOS
-	go build -o build/Partycloud.app/Contents/MacOS/main ./daemon
+	go build -o build/Partycloud.app/Contents/MacOS/main ./desktop
 
 gui/app/pb/daemon.d.ts: proto/daemon.proto
 	mkdir -p gui/app/pb
