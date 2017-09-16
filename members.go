@@ -72,7 +72,7 @@ func (e *Environment) RunMemberList(ctx context.Context) *MemberList {
 			case <-time.After(1 * time.Second):
 				guild, err := ConnectedGuild(ctx)
 				if err != nil {
-					panic(err)
+					fmt.Println(err)
 				}
 
 				if guild != nil && guild.Id != guildId {

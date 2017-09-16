@@ -56,8 +56,10 @@ func CreateContainer(ctx context.Context, image, name, hostPath, partyID string)
 			return err
 		}
 		containerCfg := &container.Config{
-			Image:  image,
-			Labels: map[string]string{"party": partyID},
+			Image:     image,
+			Labels:    map[string]string{"party": partyID},
+			OpenStdin: true,
+			Tty:       true,
 		}
 		hostCfg := &container.HostConfig{
 			PublishAllPorts: true,

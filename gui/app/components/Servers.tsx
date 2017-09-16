@@ -1,7 +1,7 @@
+import { Link } from 'react-router-dom';
 import { RouteComponentProps } from 'react-router';
 import * as React from 'react';
 import { Server } from "../pb/daemon_pb";
-
 
 export interface Props extends RouteComponentProps<any> {
   fetchServers(): void,
@@ -32,20 +32,23 @@ export class Servers extends React.Component<Props> {
   render() {
     const { servers, startServer, stopServer } = this.props;
     return (
-      <ul>
-        {servers.map(s => 
-          <li key={s.id}>
-            {s.name}
-            {displayStatus(s.status)}
-            {s.status === Server.Status.RUNNING &&
-              <button onClick={() => stopServer(s.id)}>stop</button>
-            }
-            {s.status === Server.Status.STOPPED && 
-              <button onClick={() => startServer(s.id)}>start</button>
-            }
-          </li>
-        )}
-      </ul>
+      <div>
+        <ul>
+          {servers.map(s => 
+            <li key={s.id}>
+              {s.name}
+              {displayStatus(s.status)}
+              {s.status === Server.Status.RUNNING &&
+                <button onClick={() => stopServer(s.id)}>stop</button>
+              }
+              {s.status === Server.Status.STOPPED && 
+                <button onClick={() => startServer(s.id)}>start</button>
+              }
+            </li>
+          )}
+        </ul>
+        <Link to="/new">New server</Link>
+      </div>
     );
   }
 }
