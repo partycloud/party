@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path"
 	"path/filepath"
@@ -16,8 +17,6 @@ import (
 
 	"golang.org/x/net/context"
 
-	astilectron "github.com/asticode/go-astilectron"
-	astilog "github.com/asticode/go-astilog"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/partycloud/party"
 	pb "github.com/partycloud/party/proto/daemon"
@@ -32,62 +31,29 @@ import (
 
 var cfgPath string
 var env party.Environment
-var window *astilectron.Window
 
 func init() { runtime.LockOSThread() }
 
 func OpenGUI() {
 	go func() {
-		if window != nil {
-			window.Focus()
-			return
-		}
-		fmt.Println("Starting electron")
-		a, err := astilectron.New(astilectron.Options{
-			AppName:            "Partycloud",
-			AppIconDefaultPath: "../resources/icons/256x256.png",
-			AppIconDarwinPath:  "../resources/icon.icns",
-		})
-		if err != nil {
-			fmt.Printf("failed to start electron %v\n", err)
-			return
-		}
-		defer a.Close()
-
-		// Start astilectron
-		if err = a.Start(); err != nil {
-			fmt.Printf("failed to start electron %v\n", err)
+		cmd := exec.Command(
+			path.Join("..", "MacOS", "ui"),
+			fmt.Sprintf("--daemon-addr=localhost:%d", viper.GetInt("port")),
+		)
+		if err := cmd.Start(); err != nil {
+			fmt.Println("error starting electron", err)
 			return
 		}
 
-		fmt.Println("creating electron window")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
 
-		window, err = a.NewWindow(fmt.Sprintf("http://127.0.0.1:%d", viper.GetInt("port")), &astilectron.WindowOptions{
-			Center: astilectron.PtrBool(true),
-			Height: astilectron.PtrInt(600),
-			Width:  astilectron.PtrInt(600),
-		})
-		if err != nil {
-			fmt.Printf("failed to create window %v\n", err)
+		fmt.Println("waiting for electron to finish")
+		if err := cmd.Wait(); err != nil {
+			fmt.Println("error running electron", err)
 			return
 		}
-		if err := window.Create(); err != nil {
-			fmt.Printf("failed to open window %v\n", err)
-			return
-		}
-
-		window.On(astilectron.EventNameWindowEventMessage, func(e astilectron.Event) (deleteListener bool) {
-			var m string
-			e.Message.Unmarshal(&m)
-			astilog.Infof("Received message %s", m)
-			return
-		})
-
-		// Send message to webserver
-		window.Send("What's up?")
-
-		a.Wait()
-		fmt.Println("Closed window")
+		fmt.Println("electron finished")
 	}()
 }
 
@@ -217,6 +183,7 @@ func (s *DServer) Events(req *pb.GetEventsRequest, stream pb.Daemon_EventsServer
 		log.Fatalln(err)
 	} else {
 		for _, s := range resp.Servers {
+			fmt.Println("Sending", s)
 			stream.Send(&pb.Event{
 				Payload: &pb.Event_ServerUpdate{
 					ServerUpdate: &pb.EventServerUpdate{

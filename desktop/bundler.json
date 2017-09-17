@@ -1,7 +1,0 @@
-{
-  "app_name": "Partycloud",
-  "icon_path_darwin": "../resources/Icon.png.icns",
-  "icon_path_linux": "../resources/Icon.png",
-  "icon_path_windows": "../resources/icon.ico",
-  "output_path": "../output"
-}

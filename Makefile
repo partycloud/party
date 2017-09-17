@@ -1,4 +1,16 @@
-all: proto/api/api.pb.go proto/daemon/daemon.pb.go proto/filesync/filesync.pb.go gui/app/pb/daemon.d.ts
+GO_APP=build/Partycloud.app
+DESKTOP_DIST=desktop/ui/dist
+DESKTOP_MAC_APP=$(DESKTOP_DIST)/mac/Partycloud.app
+
+.PHONY: app clean
+all: proto/api/api.pb.go proto/daemon/daemon.pb.go proto/filesync/filesync.pb.go desktop/ui/app/pb/daemon.d.ts
+
+app: $(GO_APP)
+	cd ./desktop/ui && npm run dist
+	cd $(DESKTOP_MAC_APP)/Contents/MacOS && mv Partycloud ui
+	cp $(GO_APP)/Contents/MacOS/main $(DESKTOP_MAC_APP)/Contents/MacOS/Partycloud
+	cp resources/Icon.png* $(DESKTOP_MAC_APP)/Contents/Resources/
+
 
 proto/api/api.pb.go: proto/api.proto
 	mkdir -p proto/api
@@ -13,26 +25,26 @@ proto/filesync/filesync.pb.go: proto/filesync.proto
 	protoc -I proto/ proto/filesync.proto --go_out=plugins=grpc:proto/filesync
 
 build/Partycloud.app: build/Partycloud.app/Contents/MacOS/main
-	mkdir -p build/Partycloud.app/Contents/Resources
-	cp resources/App.plist build/Partycloud.app/Contents/Info.plist
-	cp resources/Icon.png* build/Partycloud.app/Contents/Resources/
+	mkdir -p $(GO_APP)/Contents/Resources
+	cp resources/App.plist $(GO_APP)/Contents/Info.plist
+	cp resources/Icon.png* $(GO_APP)/Contents/Resources/
 
 build/Partycloud.app/Contents/MacOS/main: $(foreach dir, ., $(wildcard $(dir)/*.go))
-	mkdir -p build/Partycloud.app/Contents/MacOS
-	go build -o build/Partycloud.app/Contents/MacOS/main ./desktop
+	mkdir -p $(GO_APP)/Contents/MacOS
+	go build -o $(GO_APP)/Contents/MacOS/main ./desktop
 
-gui/app/pb/daemon.d.ts: proto/daemon.proto
-	mkdir -p gui/app/pb
+desktop/ui/app/pb/daemon.d.ts: proto/daemon.proto
+	mkdir -p desktop/ui/app/pb
 	protoc \
-		--plugin=protoc-gen-ts=./gui/node_modules/.bin/protoc-gen-ts \
-		--js_out=import_style=commonjs,binary:gui/app/pb \
-		--ts_out=service=true:gui/app/pb \
+		--plugin=protoc-gen-ts=./desktop/ui/node_modules/.bin/protoc-gen-ts \
+		--js_out=import_style=commonjs,binary:desktop/ui/app/pb \
+		--ts_out=service=true:desktop/ui/app/pb \
 		-I ./proto proto/daemon.proto
 
-.PHONY: clean
 clean:
-	rm -rf build/Partycloud.app
+	rm -rf $(GO_APP)
+	rm -rf $(DESKTOP_DIST)
 	rm -rf proto/api
 	rm -rf proto/daemon
 	rm -rf proto/filesync
-	rm -rf gui/app/pb
+	rm -rf desktop/ui/app/pb

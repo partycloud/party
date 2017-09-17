@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Partycloud</title>
+    <meta name="daemon" content={{}}
+  </head>
+  <body>
+  <div id="root"></div>
+  
+  <script>
+      {
+        const script = document.createElement('script');
+        script.src = (process.env.HOT)
+          ? 'http://localhost:58890/bundle.js'
+          : './dist/bundle.js';
+        // HACK: Writing the script path should be done with webpack
+        document.body.appendChild(script);
+      }
+    </script>
+</html>
